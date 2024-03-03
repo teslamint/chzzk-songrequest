@@ -3,7 +3,21 @@ services:
   app:
     build:
       context: .
-    ports:
-      - "127.0.0.1:3000:3000"
     volumes:
       - ./.env.docker:/app/.env:ro
+
+  caddy:
+    image: caddy:alpine
+    ports:
+      - "127.0.0.1:3000:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_started
+
+volumes:
+  caddy_data:
+  caddy_config:

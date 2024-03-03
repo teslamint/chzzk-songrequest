@@ -1,0 +1,10 @@
+{
+	servers :80 {
+		protocols h1 h2c h2 h3
+	}
+}
+
+:80 {
+	encode gzip
+	reverse_proxy app:3000
+}
