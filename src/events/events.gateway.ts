@@ -45,26 +45,13 @@ export class EventsGateway {
   }
 
   @SubscribeMessage('song_ended')
-  async songEnded(
-    @MessageBody() data: { id: string; channelId: string },
-    @ConnectedSocket() client: Socket,
-  ) {
+  async songEnded(@MessageBody() data: { id: string; channelId: string }) {
     this.logger.debug('song ended:', data);
     // update song status
     await this.songRequestService.deleteRequest({
       id: data.id,
       channel_id: data.channelId,
     });
-    // get next song of channel
-    const song = await this.songRequestService.firstPendingRequestByChannelId(
-      data.channelId,
-    );
-    if (song) {
-      client.emit('next_song_' + data.channelId, {
-        id: song.id,
-        url: song.url,
-      });
-    }
   }
 
   @OnEvent('songRequest.created')
