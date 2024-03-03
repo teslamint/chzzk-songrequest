@@ -59,10 +59,12 @@ export class EventsGateway {
     const song = await this.songRequestService.firstPendingRequestByChannelId(
       data.channelId,
     );
-    client.emit('next_song_' + data.channelId, {
-      id: song.id,
-      url: song.url,
-    });
+    if (song) {
+      client.emit('next_song_' + data.channelId, {
+        id: song.id,
+        url: song.url,
+      });
+    }
   }
 
   @OnEvent('songRequest.created')
