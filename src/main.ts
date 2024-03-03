@@ -12,7 +12,7 @@ async function bootstrap() {
     new FastifyAdapter(),
   );
   const configService = app.get(ConfigService);
-  await app.listen(configService.get('PORT'));
+  await app.listen(configService.get('PORT'), '0.0.0.0');
 }
 
 bootstrap().then(() => {});
