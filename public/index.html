@@ -24,7 +24,13 @@
       if (event.data === YT.PlayerState.ENDED) {
         console.debug('player ended');
         playerState = 0;
+        // send song_ended event to server
         if (currentSong) {
+          console.debug('send song ended event to server');
+          socket.emit('song_ended', {
+            id: currentSong.id,
+            channelId,
+          });
           playNextSong();
         }
       } else if (event.data === YT.PlayerState.PLAYING) {
@@ -90,18 +96,6 @@
 
     const playNextSong = () => {
       console.debug('play next song called.');
-      // send song_ended event to server
-      if (currentSong) {
-        console.debug('send song ended event to server');
-        socket.emit('song_ended', {
-          id: currentSong.id,
-          channelId,
-        });
-        if (playerState === 1) {
-          console.debug('pause video');
-          player.pauseVideo();
-        }
-      }
       if (songRequests.length > 0) {
         // play first song in the cue
         console.debug('play first pending song in queue');
