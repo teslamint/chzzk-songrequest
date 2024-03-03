@@ -100,10 +100,12 @@ export class SongRequestService {
     const deleted = await this.prisma.songRequest.delete({
       where,
     });
-    this.eventEmitter.emit(
-      'songRequest.deleted',
-      new SongRequestDeletedEvent(deleted),
-    );
+    if (deleted.status === 'PENDING') {
+      this.eventEmitter.emit(
+        'songRequest.deleted',
+        new SongRequestDeletedEvent(deleted),
+      );
+    }
     return deleted;
   }
 
