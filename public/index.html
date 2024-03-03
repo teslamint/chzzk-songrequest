@@ -118,6 +118,7 @@
         return item.id === song.id;
       });
       if (idx > -1) {
+        songRequests[idx] = null;
         delete songRequests[idx];
       }
     };
@@ -129,8 +130,8 @@
       isWidgetInitialized = true;
       const songs = JSON.parse(data);
       console.debug('initial widget data from server:', songs);
-      // clear queue
-      songRequests.push(...songs);
+      // add queue
+      songRequests.unshift(...songs);
       playNextSong();
     });
 
