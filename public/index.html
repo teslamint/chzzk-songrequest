@@ -1,0 +1,168 @@
+<!doctype html>
+<div id="player"></div>
+<div id="output"></div>
+<script async src="https://www.youtube.com/iframe_api"></script>
+<script type="module">
+  import { io } from '/socket.io.esm.min.js';
+
+  window.addEventListener('load', () => {
+    const socket = io({ transports: ['websocket'] });
+    const channelId = 'c7332d8ffbcda54f7d48720555ed1ffd';
+    let player;
+    let isWidgetInitialized = false;
+    let isPlayerReady = false;
+    let playerState = -1;
+    const songRequests = [];
+    let currentSong;
+
+    const onPlayerReady = () => {
+      console.debug('player ready');
+      isPlayerReady = true;
+      // play video
+      playNextSong();
+    };
+
+    const onPlayerStateChange = (event) => {
+      if (event.data === YT.PlayerState.ENDED) {
+        console.debug('player ended');
+        playerState = 0;
+        if (currentSong) {
+          playNextSong();
+        }
+      } else if (event.data === YT.PlayerState.PLAYING) {
+        // check current song variable
+        console.debug('playing video', player.getVideoUrl());
+        playerState = 1;
+      } else if (event.data === YT.PlayerState.PAUSED) {
+        console.debug('player paused');
+        playerState = 2;
+      } else if (event.data === YT.PlayerState.CUED) {
+        console.debug('player cued');
+      }
+    };
+
+    const createPlayer = (id) => {
+      if (player || isPlayerReady) {
+        return;
+      }
+      player = new YT.Player('player', {
+        width: '640',
+        height: '360',
+        videoId: id,
+        playerVars: { 'autoplay': 1, 'controls': 0 },
+        events: {
+          'onReady': onPlayerReady,
+          'onStateChange': onPlayerStateChange,
+        },
+      });
+    };
+
+    const getVideoIdFromUrl = (_url) => {
+      const url = new URL(_url);
+      let id = '';
+      if (url.host === 'youtu.be') {
+        id = url.pathname.replace(/^\//, '');
+      } else {
+        id = url.searchParams.get('v');
+      }
+      return id;
+    };
+
+    const playSong = (song) => {
+      console.debug('play song:', song);
+      if (song.url) {
+        const id = getVideoIdFromUrl(song.url);
+        song.status = 'PLAYING';
+        if (!currentSong || currentSong.id !== song.id) {
+          currentSong = song;
+        } else if (playerState === 1) {
+          // same video, do nothing
+          return;
+        }
+        if (!isPlayerReady) {
+          createPlayer(id);
+        } else {
+          player.loadVideoById(id);
+        }
+        socket.emit('song_started', {
+          id: song.id, channelId: channelId,
+        });
+      }
+    };
+
+    const playNextSong = () => {
+      console.debug('play next song called.');
+      // send song_ended event to server
+      if (currentSong) {
+        console.debug('send song ended event to server');
+        socket.emit('song_ended_' + channelId, {
+          id: currentSong.id,
+          channelId,
+        });
+        if (playerState === 1) {
+          console.debug('pause video');
+          player.pauseVideo();
+        }
+      }
+      if (songRequests.length > 0) {
+        // play first song in the cue
+        console.debug('play first pending song in queue');
+        const nextSong = songRequests.shift();
+        console.debug('play next song');
+        playSong(nextSong);
+      }
+    };
+
+    const deleteSongFromQueue = (song) => {
+      const idx = songRequests.findIndex((item) => {
+        return item.id === song.id;
+      });
+      if (idx > -1) {
+        delete songRequests[idx];
+      }
+    };
+
+    socket.on('widget_' + channelId, (data) => {
+      if (isWidgetInitialized) {
+        return;
+      }
+      isWidgetInitialized = true;
+      const songs = JSON.parse(data);
+      console.debug('initial widget data from server:', songs);
+      // clear queue
+      songRequests.push(...songs);
+      playNextSong();
+    });
+
+    socket.on('next_song_' + channelId, (data) => {
+      const song = JSON.parse(data);
+      console.debug('next song data from server:', song);
+      songRequests.push(song);
+      if (playerState !== 1) {
+        // if player is not playing, play video now
+        playNextSong();
+      }
+    });
+
+    socket.on('delete_song_' + channelId, (data) => {
+      const song = JSON.parse(data);
+      console.debug('delete song data from server:', song);
+      deleteSongFromQueue(song);
+    });
+
+    socket.on('skip_song_' + channelId, () => {
+      console.debug('skip current song');
+      // play next video
+      playNextSong();
+    });
+
+    socket.on('connect', () => {
+      const data = { 'id': channelId };
+      socket.emit('init', data);
+    });
+
+    socket.on('disconnect', (e) => {
+      //
+    });
+  });
+</script>

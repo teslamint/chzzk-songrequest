@@ -1,0 +1,49 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model SongRequest {
+  id           String        @id
+  service      SongService
+  url          String
+  title        String?
+  status       RequestStatus @default(PENDING)
+  play_time    BigInt
+  channel_id   String
+  request_from RequestFrom
+  requested_by String
+  requested_at DateTime      @default(now())
+
+  @@unique([channel_id, url])
+  @@index([channel_id])
+  @@index([requested_by])
+}
+
+enum SongService {
+  YOUTUBE
+  SOUNDCLOUD
+}
+
+enum RequestStatus {
+  PENDING
+  PLAYING
+  FINISHED
+}
+
+enum RequestFrom {
+  CHAT
+  WEBSITE
+}
