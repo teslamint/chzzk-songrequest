@@ -95,7 +95,7 @@
       // send song_ended event to server
       if (currentSong) {
         console.debug('send song ended event to server');
-        socket.emit('song_ended_' + channelId, {
+        socket.emit('song_ended', {
           id: currentSong.id,
           channelId,
         });
