@@ -8,7 +8,6 @@ import {
   SongRequestDeletedEvent,
   SongRequestSkippedEvent,
 } from './song-request.event';
-import { Cron } from '@nestjs/schedule';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 
@@ -111,12 +110,6 @@ export class SongRequestService {
     return deleted;
   }
 
-  @Cron('0 * * * * *')
-  async handleCron() {
-    this.logger.debug('minute scheduler called.');
-    await this.clearFinishedRequest();
-  }
-
   async setPlaying(data: { id: string; channelId: string }) {
     await this.prisma.songRequest.update({
       data: {
@@ -142,18 +135,6 @@ export class SongRequestService {
     });
   }
 
-  async setFinished(data: { id: string; channelId: string }) {
-    await this.prisma.songRequest.update({
-      data: {
-        status: 'FINISHED',
-      },
-      where: {
-        id: data.id,
-        channel_id: data.channelId,
-      },
-    });
-  }
-
   async getCurrentSong(channelId: string) {
     return this.prisma.songRequest.findFirst({
       where: {
@@ -168,22 +149,14 @@ export class SongRequestService {
   }
 
   async skipSong(song: SongRequest) {
-    await this.setFinished({
+    await this.deleteRequest({
       id: song.id,
-      channelId: song.channel_id,
+      channel_id: song.channel_id,
     });
     song.status = 'FINISHED';
     this.eventEmitter.emit(
       'songRequest.skipped',
       new SongRequestSkippedEvent(song),
     );
-  }
-
-  private async clearFinishedRequest() {
-    await this.prisma.songRequest.deleteMany({
-      where: {
-        status: 'FINISHED',
-      },
-    });
   }
 }

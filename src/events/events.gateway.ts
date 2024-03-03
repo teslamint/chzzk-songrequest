@@ -54,9 +54,9 @@ export class EventsGateway {
   ) {
     this.logger.debug('song ended:', data);
     // update song status
-    await this.songRequestService.setFinished({
+    await this.songRequestService.deleteRequest({
       id: data.id,
-      channelId: data.channelId,
+      channel_id: data.channelId,
     });
     // get next song of channel
     const song = await this.songRequestService.firstPendingRequestByChannelId(
@@ -70,6 +70,7 @@ export class EventsGateway {
 
   @OnEvent('songRequest.created')
   async sendNewRequestToWidget(event: SongRequestCreatedEvent) {
+    this.logger.debug('request created event', event);
     const { channel_id } = event.data();
     this.server
       .to('widget_' + channel_id)
@@ -92,6 +93,7 @@ export class EventsGateway {
 
   @OnEvent('songRequest.skipped')
   async sendSkipRequestToWidget(event: SongRequestSkippedEvent) {
+    this.logger.debug('song skipped', event);
     const { channel_id } = event.data();
     this.server
       .to('widget_' + channel_id)
