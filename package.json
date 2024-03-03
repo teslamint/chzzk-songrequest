@@ -20,7 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@fastify/static": "^7.0.1",
+    "@fastify/static": "^6.5.0",
     "@neondatabase/serverless": "^0.9.0",
     "@nestjs/bull": "^10.1.0",
     "@nestjs/cache-manager": "^2.2.1",
@@ -33,9 +33,7 @@
     "@nestjs/schedule": "^4.0.1",
     "@nestjs/serve-static": "^4.0.1",
     "@nestjs/websockets": "^10.3.3",
-    "@prisma/adapter-neon": "^5.10.2",
     "@prisma/client": "5.10.2",
-    "@prisma/extension-accelerate": "^1.0.0",
     "bull": "^4.12.2",
     "cache-manager": "^5.4.0",
     "chzzk": "^1.4.2",
@@ -44,7 +42,6 @@
     "rxjs": "^7.8.1",
     "socket.io": "^4.7.4",
     "ulidx": "^2.3.0",
-    "ws": "^8.16.0",
     "ytdl-core": "^4.11.5"
   },
   "devDependencies": {
