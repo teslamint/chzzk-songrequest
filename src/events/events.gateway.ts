@@ -35,10 +35,7 @@ export class EventsGateway {
   }
 
   @SubscribeMessage('song_started')
-  async songStarted(
-    @MessageBody() data: { id: string; channelId: string },
-    @ConnectedSocket() client: Socket,
-  ) {
+  async songStarted(@MessageBody() data: { id: string; channelId: string }) {
     this.logger.debug('song started:', data);
     // update song status
     await this.songRequestService.setPlaying({
