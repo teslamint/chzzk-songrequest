@@ -42,9 +42,6 @@ export class SongRequestService {
     return this.requests({
       where: {
         channel_id: channelId,
-        status: {
-          not: 'FINISHED',
-        },
       },
     });
   }
@@ -153,7 +150,6 @@ export class SongRequestService {
       id: song.id,
       channel_id: song.channel_id,
     });
-    song.status = 'FINISHED';
     this.eventEmitter.emit(
       'songRequest.skipped',
       new SongRequestSkippedEvent(song),
