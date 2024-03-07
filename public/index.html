@@ -127,6 +127,16 @@
       playNextSong();
     });
 
+    socket.on('next_song_' + channelId, (data) => {
+      const song = JSON.parse(data);
+      console.debug('next song data from server:', song);
+      songRequests.push(song);
+      if (playerState !== 1) {
+        // if player is not playing, play video now
+        playNextSong();
+      }
+    });
+
     socket.on('delete_song_' + channelId, (data) => {
       const song = JSON.parse(data);
       console.debug('delete song data from server:', song);
