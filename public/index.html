@@ -165,6 +165,13 @@
       }
     };
 
+    window.addEventListener('beforeunload', () => {
+      // send song_stopped event to server
+      socket.emit('song_stopped', {
+        channelId: channelId,
+      });
+    });
+
     socket.on('widget_' + channelId, (data) => {
       if (isWidgetInitialized) {
         return;

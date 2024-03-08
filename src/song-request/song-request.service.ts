@@ -157,4 +157,20 @@ export class SongRequestService {
       new SongRequestSkippedEvent(song),
     );
   }
+
+  /**
+   * 재생중 상태인 곡(들)을 대기중으로 되돌린다.
+   * @param data
+   */
+  async revertToPending(data: { channelId: string }) {
+    await this.prisma.songRequest.updateMany({
+      data: {
+        status: 'PENDING',
+      },
+      where: {
+        channel_id: data.channelId,
+        status: 'PLAYING',
+      },
+    });
+  }
 }

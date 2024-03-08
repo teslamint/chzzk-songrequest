@@ -44,6 +44,14 @@ export class EventsGateway {
     });
   }
 
+  @SubscribeMessage('song_stopped')
+  async songStopped(@MessageBody() data: { channelId: string }) {
+    this.logger.debug('song stopped:', data);
+    await this.songRequestService.revertToPending({
+      channelId: data.channelId,
+    });
+  }
+
   @SubscribeMessage('song_ended')
   async songEnded(@MessageBody() data: { id: string; channelId: string }) {
     this.logger.debug('song ended:', data);
