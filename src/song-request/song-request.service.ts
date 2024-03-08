@@ -121,19 +121,6 @@ export class SongRequestService {
     });
   }
 
-  async firstPendingRequestByChannelId(channelId: string) {
-    return this.prisma.songRequest.findFirst({
-      where: {
-        channel_id: channelId,
-        status: 'PENDING',
-      },
-      take: 1,
-      orderBy: {
-        id: 'asc',
-      },
-    });
-  }
-
   async getCurrentSong(channelId: string) {
     return this.prisma.songRequest.findFirst({
       where: {
