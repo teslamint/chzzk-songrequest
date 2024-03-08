@@ -43,6 +43,9 @@ export class SongRequestService {
       where: {
         channel_id: channelId,
       },
+      orderBy: {
+        id: 'asc',
+      },
     });
   }
 
