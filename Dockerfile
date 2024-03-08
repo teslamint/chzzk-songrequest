@@ -17,7 +17,7 @@ COPY ./tsconfig*.json ./
 COPY ./nest-cli.json ./
 COPY --from=deps /app/node_modules ./node_modules/
 RUN pnpm build
-RUN --mount=type=cache,id=pnpm,target=/root/.pnpm-store/v3 pnpm prune --prod
+RUN pnpm prune --prod
 
 FROM base AS final
 WORKDIR /app
@@ -28,6 +28,5 @@ COPY --from=build /app/node_modules ./node_modules/
 COPY ./public ./public/
 COPY ./prisma ./prisma/
 COPY docker-entrypoint.sh /app/
-RUN --mount=type=cache,id=pnpm,target=/root/.pnpm-store/v3 pnpm add @prisma/client
 
 CMD [ "/app/docker-entrypoint.sh" ]
