@@ -43,6 +43,9 @@ export class SongRequestService {
       where: {
         channel_id: channelId,
       },
+      orderBy: {
+        id: 'asc',
+      },
     });
   }
 
@@ -121,19 +124,6 @@ export class SongRequestService {
     });
   }
 
-  async firstPendingRequestByChannelId(channelId: string) {
-    return this.prisma.songRequest.findFirst({
-      where: {
-        channel_id: channelId,
-        status: 'PENDING',
-      },
-      take: 1,
-      orderBy: {
-        id: 'asc',
-      },
-    });
-  }
-
   async getCurrentSong(channelId: string) {
     return this.prisma.songRequest.findFirst({
       where: {
@@ -156,5 +146,21 @@ export class SongRequestService {
       'songRequest.skipped',
       new SongRequestSkippedEvent(song),
     );
+  }
+
+  /**
+   * 재생중 상태인 곡(들)을 대기중으로 되돌린다.
+   * @param data
+   */
+  async revertToPending(data: { channelId: string }) {
+    await this.prisma.songRequest.updateMany({
+      data: {
+        status: 'PENDING',
+      },
+      where: {
+        channel_id: data.channelId,
+        status: 'PLAYING',
+      },
+    });
   }
 }
