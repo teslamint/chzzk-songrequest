@@ -154,7 +154,7 @@ export class ChatBotService {
         this.eventEmitter.emit(
           'chat.send',
           new SendChatMessageEvent({
-            service: 'CHZZK',
+            service: event.service,
             channelId: event.channelId,
             message: `${mention}<${item.title}> 재생목록에 ${items.length}번째로 추가되었습니다.`,
           }),
