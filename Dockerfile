@@ -22,7 +22,6 @@ RUN pnpm prune --prod
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/package.json ./
-COPY --from=build /app/pnpm-lock.yaml ./
 COPY --from=build /app/dist ./dist/
 COPY --from=build /app/node_modules ./node_modules/
 COPY ./public ./public/
