@@ -1,0 +1,73 @@
+<!doctype html>
+<head>
+  <title></title>
+  <style>
+    body {
+      background-color: rgba(0, 0, 0, 0);
+      margin: 0 auto;
+      overflow: hidden;
+    }
+
+    #player {
+      width: 100%;
+      height: 360px;
+    }
+
+    #ticker {
+      width: 100%;
+      height: 1.1em;
+      line-height: 1.1em;
+      font-size: 1.66em;
+      font-family: sans-serif;
+      color: white;
+      text-shadow: black 0 0 1em;
+      overflow: hidden;
+      white-space: nowrap;
+      position: relative;
+    }
+
+    #ticker span {
+      display: inline-block;
+    }
+
+    #songTitle {
+      animation: marquee 20s linear infinite;
+    }
+
+    #playTime {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      background-color: black;
+    }
+
+    #playTime::before {
+      padding-left: 0.5rem;
+      content: ' ';
+    }
+
+    .stopped {
+      animation: none;
+    }
+
+    @keyframes marquee {
+      0% {
+        transform: translateX(75vw);
+      }
+      100% {
+        transform: translateX(-100%);
+      }
+    }
+  </style>
+</head>
+<div id="player"></div>
+<div id="ticker">
+  <span class="stopped" id="songTitle"></span>
+  <span id="playTime">00:00:00 / 00:00:00</span>
+</div>
+<script async src="https://www.youtube.com/iframe_api"></script>
+<script type="module">
+  import { Widget } from '/public/index.js';
+
+  new Widget('{{ channelId }}');
+</script>

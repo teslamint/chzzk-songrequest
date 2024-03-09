@@ -8,8 +8,7 @@ import { ChzzkModule } from './chzzk/chzzk.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ChatBotModule } from './chat-bot/chat-bot.module';
 import { EventsModule } from './events/events.module';
-import { ServeStaticModule } from '@nestjs/serve-static';
-import { join } from 'node:path';
+import { WidgetController } from './widget/widget.controller';
 
 @Module({
   imports: [
@@ -43,13 +42,10 @@ import { join } from 'node:path';
     }),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'public'),
-      // renderPath: new RegExp(/(|socket\.io\.esm\.min\.js(\.map)?)/),
-    }),
     ChzzkModule,
     ChatBotModule,
     EventsModule,
   ],
+  controllers: [WidgetController],
 })
 export class AppModule {}
