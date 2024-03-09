@@ -22,8 +22,6 @@ export class ChzzkService {
       nidAuth: this.configService.get('NID_AUT'),
       nidSession: this.configService.get('NID_SES'),
     });
-    const channelId = this.configService.get('CHZZK_CHANNEL_ID');
-    this.getChatClient(channelId);
   }
 
   getChatClient(channelId: string): ChzzkChat {

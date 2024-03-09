@@ -6,6 +6,7 @@ class Widget {
   }
 
   _init(channelId) {
+    let socket;
     let player;
     let isWidgetInitialized = false;
     let isPlayerReady = false;
@@ -145,7 +146,7 @@ class Widget {
         updateTicker(currentSong);
         socket.emit('song_started', {
           id: song.id,
-          channelId: channelId,
+          channelId,
         });
       }
     };
@@ -172,7 +173,7 @@ class Widget {
     };
 
     window.addEventListener('load', () => {
-      const socket = io({ transports: ['websocket'] });
+      socket = io({ transports: ['websocket'] });
 
       window.addEventListener('beforeunload', () => {
         // send song_stopped event to server
