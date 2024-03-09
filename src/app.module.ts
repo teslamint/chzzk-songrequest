@@ -32,7 +32,6 @@ import { WidgetController } from './widget/widget.controller';
         REDIS_PASS: Joi.string(),
         NID_AUT: Joi.string(),
         NID_SES: Joi.string(),
-        CHZZK_CHANNEL_ID: Joi.string(),
       }),
       validationOptions: {
         abortEarly: true,

@@ -22,8 +22,6 @@ export class ChzzkService {
       nidAuth: this.configService.get('NID_AUT'),
       nidSession: this.configService.get('NID_SES'),
     });
-    const channelId = this.configService.get('CHZZK_CHANNEL_ID');
-    this.getChatClient(channelId);
   }
 
   getChatClient(channelId: string): ChzzkChat {
@@ -32,6 +30,25 @@ export class ChzzkService {
       this.chatClients[channelId].connect().then(() => {});
     }
     return this.chatClients[channelId];
+  }
+
+  @OnEvent('widget.open')
+  private handleChatConnect(args: { channelId: string }) {
+    this.logger.debug('widget open event:', { ...args });
+    const { channelId } = args;
+    this.getChatClient(channelId);
+  }
+
+  @OnEvent('widget.close')
+  private async handleChatDisconnect(args: { channelId: string }) {
+    this.logger.debug('widget close event:', { ...args });
+    const { channelId } = args;
+    if (this.chatClients[channelId]) {
+      this.chatClients[channelId].disconnect().then(() => {
+        this.logger.debug('chat disconnected');
+        delete this.chatClients[channelId];
+      });
+    }
   }
 
   @OnEvent('chat.send')
@@ -65,6 +82,15 @@ export class ChzzkService {
     chatClient.on('reconnect', () => {
       this.logger.debug(`Reconnected to ${channelId}`);
       this.eventEmitter.emit('chat.recoonect', {
+        service: 'CHZZK',
+        channelId: channelId,
+      });
+    });
+
+    // 연결 종료
+    chatClient.on('disconnect', () => {
+      this.logger.debug(`Closed to ${channelId}`);
+      this.eventEmitter.emit('chat.disconnect', {
         service: 'CHZZK',
         channelId: channelId,
       });
