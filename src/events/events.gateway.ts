@@ -10,6 +10,7 @@ import { Server, Socket } from 'socket.io';
 import { SongRequestService } from '../song-request/song-request.service';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import {
+  SongRequestClearedEvent,
   SongRequestCreatedEvent,
   SongRequestDeletedEvent,
   SongRequestSkippedEvent,
@@ -103,6 +104,18 @@ export class EventsGateway {
       .to('widget_' + channel_id)
       .emit(
         'skip_song_' + channel_id,
+        JSON.stringify(event.data(), this.replacer),
+      );
+  }
+
+  @OnEvent('songRequest.cleared')
+  async sendRequestListClearedToWidget(event: SongRequestClearedEvent) {
+    this.logger.debug('list cleared', event);
+    const { channel_id } = event.data();
+    this.server
+      .to(`widget_${channel_id}`)
+      .emit(
+        'clear_list_' + channel_id,
         JSON.stringify(event.data(), this.replacer),
       );
   }

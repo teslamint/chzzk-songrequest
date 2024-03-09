@@ -35,3 +35,15 @@ export class SongRequestSkippedEvent {
     return this._data;
   }
 }
+
+export class SongRequestClearedEvent {
+  private readonly _data: { channel_id: string };
+
+  constructor(channelId: string) {
+    this._data = { channel_id: channelId };
+  }
+
+  data() {
+    return this._data;
+  }
+}
