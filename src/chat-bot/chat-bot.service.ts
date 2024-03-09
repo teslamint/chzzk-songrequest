@@ -285,7 +285,7 @@ export class ChatBotService {
 
   private readonly _clear = async (event: ChatMessageEvent) => {
     // 대기열을 비운다. 스트리머만 사용할 수 있다.
-    if (event.role === 'user') {
+    if (event.role !== 'streamer' && event.role !== 'manager') {
       this.sendChat(
         event.service,
         event.channelId,
