@@ -32,6 +32,25 @@ export class ChzzkService {
     return this.chatClients[channelId];
   }
 
+  @OnEvent('widget.open')
+  private handleChatConnect(args: { channelId: string }) {
+    this.logger.debug('widget open event:', { ...args });
+    const { channelId } = args;
+    this.getChatClient(channelId);
+  }
+
+  @OnEvent('widget.close')
+  private async handleChatDisconnect(args: { channelId: string }) {
+    this.logger.debug('widget close event:', { ...args });
+    const { channelId } = args;
+    if (this.chatClients[channelId]) {
+      this.chatClients[channelId].disconnect().then(() => {
+        this.logger.debug('chat disconnected');
+        delete this.chatClients[channelId];
+      });
+    }
+  }
+
   @OnEvent('chat.send')
   private handleChatSend(event: SendChatMessageEvent) {
     if (event.service !== 'CHZZK') {
@@ -63,6 +82,15 @@ export class ChzzkService {
     chatClient.on('reconnect', () => {
       this.logger.debug(`Reconnected to ${channelId}`);
       this.eventEmitter.emit('chat.recoonect', {
+        service: 'CHZZK',
+        channelId: channelId,
+      });
+    });
+
+    // 연결 종료
+    chatClient.on('disconnect', () => {
+      this.logger.debug(`Closed to ${channelId}`);
+      this.eventEmitter.emit('chat.disconnect', {
         service: 'CHZZK',
         channelId: channelId,
       });

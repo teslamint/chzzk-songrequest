@@ -8,7 +8,7 @@ import {
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { SongRequestService } from '../song-request/song-request.service';
-import { OnEvent } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import {
   SongRequestCreatedEvent,
   SongRequestDeletedEvent,
@@ -21,7 +21,10 @@ export class EventsGateway {
   private server: Server;
   private readonly logger = new Logger(EventsGateway.name);
 
-  constructor(private songRequestService: SongRequestService) {}
+  constructor(
+    private songRequestService: SongRequestService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   @SubscribeMessage('init')
   async init(
@@ -29,6 +32,9 @@ export class EventsGateway {
     @ConnectedSocket() client: Socket,
   ) {
     this.logger.debug('widget connected:', data);
+    this.eventEmitter.emit('widget.open', {
+      channelId: data.id,
+    });
     const songs = await this.songRequestService.requestsByChannelId(data.id);
     client.join('widget_' + data.id);
     client.emit('widget_' + data.id, JSON.stringify(songs, this.replacer));
@@ -48,6 +54,10 @@ export class EventsGateway {
   async songStopped(@MessageBody() data: { channelId: string }) {
     this.logger.debug('song stopped:', data);
     await this.songRequestService.revertToPending({
+      channelId: data.channelId,
+    });
+    // disconnect chat
+    this.eventEmitter.emit('widget.close', {
       channelId: data.channelId,
     });
   }
