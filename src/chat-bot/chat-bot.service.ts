@@ -41,7 +41,11 @@ export class ChatBotService {
     channelId: string;
   }) {
     this.logger.debug('response to chat.connect event');
-    this.sendChat(event.service, event.channelId, '구우봇이 연결되었습니다.');
+    this.sendChat(
+      event.service,
+      event.channelId,
+      '노래신청봇이 연결되었습니다.',
+    );
   }
 
   @OnEvent('chat.message')
