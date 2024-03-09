@@ -8,6 +8,11 @@
           overflow: hidden;
       }
 
+      #player {
+          width: 100%;
+          height: 360px;
+      }
+
       #ticker {
           width: 100%;
           height: 1.1em;
@@ -23,12 +28,31 @@
 
       #ticker span {
           display: inline-block;
+      }
+
+      #songTitle {
           animation: marquee 20s linear infinite;
+      }
+
+      #playTime {
+          position: absolute;
+          right: 0;
+          bottom: 0;
+          background-color: black;
+      }
+
+      #playTime::before {
+          padding-left: 0.5rem;
+          content: ' ';
+      }
+
+      .stopped {
+          animation: none;
       }
 
       @keyframes marquee {
           0% {
-              transform: translateX(100vw);
+              transform: translateX(75vw);
           }
           100% {
               transform: translateX(-100%);
@@ -38,7 +62,8 @@
 </head>
 <div id="player"></div>
 <div id="ticker">
-  <span id="songTitle"></span>
+  <span class="stopped" id="songTitle"></span>
+  <span id="playTime">00:00:00 / 00:00:00</span>
 </div>
 <script async src="https://www.youtube.com/iframe_api"></script>
 <script type="module">
@@ -51,12 +76,34 @@
     let isWidgetInitialized = false;
     let isPlayerReady = false;
     let playerState = -1;
+    let playTimeUpdateTimer;
     const songRequests = [];
     let currentSong;
 
     const onPlayerReady = () => {
       console.debug('player ready');
       isPlayerReady = true;
+    };
+
+    const formatRelativeTime = (second) => {
+      let _hour = Math.floor(second / 3600);
+      let _minute = Math.floor((second - (_hour * 3600)) / 60);
+      let _second = Math.floor(second % 60);
+      return `${_hour}`.padStart(2, '0') + ':' + `${_minute}`.padStart(2, '0') + ':' + `${_second}`.padStart(2, '0');
+    };
+
+    const updatePlayTime = () => {
+      if (!player || playerState !== 1) {
+        return;
+      }
+      // update playtime
+      const totalDuration = player.getDuration();
+      if (totalDuration === 0) {
+        // not started
+        return;
+      }
+      const currentDuration = player.getCurrentTime();
+      document.getElementById('playTime').innerText = `${formatRelativeTime(currentDuration)} / ${formatRelativeTime(totalDuration)}`;
     };
 
     const onPlayerStateChange = (event) => {
@@ -68,6 +115,8 @@
           console.debug('send song ended event to server');
           // clear ticker
           document.getElementById('songTitle').innerText = '';
+          // stop animation
+          document.getElementById('playTime').classList.add('stopped');
           socket.emit('song_ended', {
             id: currentSong.id,
             channelId,
@@ -78,9 +127,16 @@
         // check current song variable
         console.debug('playing video', player.getVideoUrl());
         playerState = 1;
+        playTimeUpdateTimer = setInterval(updatePlayTime, 500);
       } else if (event.data === YT.PlayerState.PAUSED) {
         console.debug('player paused');
         playerState = 2;
+        document.getElementById('playTime').classList.remove('stopped');
+        if (playTimeUpdateTimer) {
+          clearInterval(playTimeUpdateTimer);
+          // reset play time
+          document.getElementById('playTime').innerText = '00:00:00 / 00:00:00';
+        }
       } else if (event.data === YT.PlayerState.CUED) {
         console.debug('player cued');
       }
@@ -94,7 +150,7 @@
         width: '640',
         height: '360',
         videoId: id,
-        playerVars: { 'autoplay': 1, 'controls': 0 },
+        playerVars: { 'autoplay': 1, 'controls': 0, 'modestbranding': 0, 'rel': 0, 'disablekb': 1 },
         events: {
           'onReady': onPlayerReady,
           'onStateChange': onPlayerStateChange,
@@ -137,6 +193,8 @@
         } else {
           player.loadVideoById(id);
         }
+        // start animation
+        document.getElementById('playTime').classList.remove('stopped');
         updateTicker(currentSong);
         socket.emit('song_started', {
           id: song.id, channelId: channelId,
