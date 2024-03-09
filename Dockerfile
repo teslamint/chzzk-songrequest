@@ -25,6 +25,7 @@ COPY --from=build /app/package.json ./
 COPY --from=build /app/dist ./dist/
 COPY --from=build /app/node_modules ./node_modules/
 COPY ./public ./public/
+COPY ./views ./views/
 COPY ./prisma ./prisma/
 COPY docker-entrypoint.sh /app/
 

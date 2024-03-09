@@ -1,77 +1,11 @@
-<!doctype html>
-<head>
-  <title></title>
-  <style type="text/css">
-      body {
-          background-color: rgba(0, 0, 0, 0);
-          margin: 0 auto;
-          overflow: hidden;
-      }
+import { io } from './socket.io.esm.min.js';
 
-      #player {
-          width: 100%;
-          height: 360px;
-      }
+class Widget {
+  constructor(channelId) {
+    this._init(channelId);
+  }
 
-      #ticker {
-          width: 100%;
-          height: 1.1em;
-          line-height: 1.1em;
-          font-size: 1.66em;
-          font-family: sans-serif;
-          color: white;
-          text-shadow: black 0 0 1em;
-          overflow: hidden;
-          white-space: nowrap;
-          position: relative;
-      }
-
-      #ticker span {
-          display: inline-block;
-      }
-
-      #songTitle {
-          animation: marquee 20s linear infinite;
-      }
-
-      #playTime {
-          position: absolute;
-          right: 0;
-          bottom: 0;
-          background-color: black;
-      }
-
-      #playTime::before {
-          padding-left: 0.5rem;
-          content: ' ';
-      }
-
-      .stopped {
-          animation: none;
-      }
-
-      @keyframes marquee {
-          0% {
-              transform: translateX(75vw);
-          }
-          100% {
-              transform: translateX(-100%);
-          }
-      }
-  </style>
-</head>
-<div id="player"></div>
-<div id="ticker">
-  <span class="stopped" id="songTitle"></span>
-  <span id="playTime">00:00:00 / 00:00:00</span>
-</div>
-<script async src="https://www.youtube.com/iframe_api"></script>
-<script type="module">
-  import { io } from './socket.io.esm.min.js';
-
-  window.addEventListener('load', () => {
-    const socket = io({ transports: ['websocket'] });
-    const channelId = 'c7332d8ffbcda54f7d48720555ed1ffd';
+  _init(channelId) {
     let player;
     let isWidgetInitialized = false;
     let isPlayerReady = false;
@@ -87,9 +21,15 @@
 
     const formatRelativeTime = (second) => {
       let _hour = Math.floor(second / 3600);
-      let _minute = Math.floor((second - (_hour * 3600)) / 60);
+      let _minute = Math.floor((second - _hour * 3600) / 60);
       let _second = Math.floor(second % 60);
-      return `${_hour}`.padStart(2, '0') + ':' + `${_minute}`.padStart(2, '0') + ':' + `${_second}`.padStart(2, '0');
+      return (
+        `${_hour}`.padStart(2, '0') +
+        ':' +
+        `${_minute}`.padStart(2, '0') +
+        ':' +
+        `${_second}`.padStart(2, '0')
+      );
     };
 
     const updatePlayTime = () => {
@@ -103,7 +43,8 @@
         return;
       }
       const currentDuration = player.getCurrentTime();
-      document.getElementById('playTime').innerText = `${formatRelativeTime(currentDuration)} / ${formatRelativeTime(totalDuration)}`;
+      document.getElementById('playTime').innerText =
+        `${formatRelativeTime(currentDuration)} / ${formatRelativeTime(totalDuration)}`;
     };
 
     const onPlayerStateChange = (event) => {
@@ -150,17 +91,23 @@
         width: '640',
         height: '360',
         videoId: id,
-        playerVars: { 'autoplay': 1, 'controls': 0, 'modestbranding': 0, 'rel': 0, 'disablekb': 1 },
+        playerVars: {
+          autoplay: 1,
+          controls: 0,
+          modestbranding: 0,
+          rel: 0,
+          disablekb: 1,
+        },
         events: {
-          'onReady': onPlayerReady,
-          'onStateChange': onPlayerStateChange,
+          onReady: onPlayerReady,
+          onStateChange: onPlayerStateChange,
         },
       });
     };
 
     const getVideoIdFromUrl = (_url) => {
       const url = new URL(_url);
-      let id = '';
+      let id;
       if (url.host === 'youtu.be') {
         id = url.pathname.replace(/^\//, '');
       } else {
@@ -197,7 +144,8 @@
         document.getElementById('playTime').classList.remove('stopped');
         updateTicker(currentSong);
         socket.emit('song_started', {
-          id: song.id, channelId: channelId,
+          id: song.id,
+          channelId: channelId,
         });
       }
     };
@@ -223,54 +171,60 @@
       }
     };
 
-    window.addEventListener('beforeunload', () => {
-      // send song_stopped event to server
-      socket.emit('song_stopped', {
-        channelId: channelId,
+    window.addEventListener('load', () => {
+      const socket = io({ transports: ['websocket'] });
+
+      window.addEventListener('beforeunload', () => {
+        // send song_stopped event to server
+        socket.emit('song_stopped', {
+          channelId: channelId,
+        });
+      });
+
+      socket.on('widget_' + channelId, (data) => {
+        if (isWidgetInitialized) {
+          return;
+        }
+        isWidgetInitialized = true;
+        const songs = JSON.parse(data);
+        console.debug('initial widget data from server:', songs);
+        // add queue
+        songRequests.unshift(...songs);
+        playNextSong();
+      });
+
+      socket.on('next_song_' + channelId, (data) => {
+        const song = JSON.parse(data);
+        console.debug('next song data from server:', song);
+        songRequests.push(song);
+        if (playerState !== 1) {
+          // if player is not playing, play video now
+          playNextSong();
+        }
+      });
+
+      socket.on('delete_song_' + channelId, (data) => {
+        const song = JSON.parse(data);
+        console.debug('delete song data from server:', song);
+        deleteSongFromQueue(song);
+      });
+
+      socket.on('skip_song_' + channelId, () => {
+        console.debug('skip current song');
+        // play next video
+        playNextSong();
+      });
+
+      socket.on('connect', () => {
+        const data = { id: channelId };
+        socket.emit('init', data);
+      });
+
+      socket.on('disconnect', () => {
+        //
       });
     });
+  }
+}
 
-    socket.on('widget_' + channelId, (data) => {
-      if (isWidgetInitialized) {
-        return;
-      }
-      isWidgetInitialized = true;
-      const songs = JSON.parse(data);
-      console.debug('initial widget data from server:', songs);
-      // add queue
-      songRequests.unshift(...songs);
-      playNextSong();
-    });
-
-    socket.on('next_song_' + channelId, (data) => {
-      const song = JSON.parse(data);
-      console.debug('next song data from server:', song);
-      songRequests.push(song);
-      if (playerState !== 1) {
-        // if player is not playing, play video now
-        playNextSong();
-      }
-    });
-
-    socket.on('delete_song_' + channelId, (data) => {
-      const song = JSON.parse(data);
-      console.debug('delete song data from server:', song);
-      deleteSongFromQueue(song);
-    });
-
-    socket.on('skip_song_' + channelId, () => {
-      console.debug('skip current song');
-      // play next video
-      playNextSong();
-    });
-
-    socket.on('connect', () => {
-      const data = { 'id': channelId };
-      socket.emit('init', data);
-    });
-
-    socket.on('disconnect', (e) => {
-      //
-    });
-  });
-</script>
+export { Widget };
