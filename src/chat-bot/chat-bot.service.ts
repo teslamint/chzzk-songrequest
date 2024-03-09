@@ -52,7 +52,7 @@ export class ChatBotService {
       return;
     }
     // split chat message
-    const [command, args] = event.message.split(/\s/, 1);
+    const [command, args] = event.message.split(/\s/, 2);
     this.logger.debug(`call command: ${command}, ${args}`);
     await this.callCommand(command, args, event);
   }
