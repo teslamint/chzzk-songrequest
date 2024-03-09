@@ -52,7 +52,7 @@ export class ChatBotService {
       return;
     }
     // split chat message
-    const [command, args] = event.message.split(/\s/, 1);
+    const [command, args] = event.message.split(/\s/, 2);
     this.logger.debug(`call command: ${command}, ${args}`);
     await this.callCommand(command, args, event);
   }
@@ -92,19 +92,26 @@ export class ChatBotService {
         );
         return;
       }
-      const info = await ytdl.getBasicInfo(ytdl.getURLVideoID(url));
+      const info = await ytdl.getInfo(ytdl.getURLVideoID(url));
       // normalize url
       url = 'https://www.youtube.com/watch?v=' + ytdl.getVideoID(url);
+      const allowedToEmbed =
+        info.videoDetails.isCrawlable && !info.videoDetails.isPrivate;
       this.logger.debug('요청 곡 정보', {
         url: url,
         title: info.videoDetails.title,
         length: info.videoDetails.lengthSeconds,
         is_family_safe: info.videoDetails.isFamilySafe,
-        allowed_to_embed: info.allow_embed,
+        allowed_to_embed: allowedToEmbed,
       });
       // 임베드 허용 어부 체크
-      if (info.allow_embed) {
-        //
+      if (!allowedToEmbed) {
+        this.sendChat(
+          event.service,
+          event.channelId,
+          `${mention}재생할 수 없는 동영상입니다.`,
+        );
+        return;
       }
       // 중복 체크
       const isExists = await this.songRequestService
