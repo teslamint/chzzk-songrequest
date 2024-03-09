@@ -234,7 +234,12 @@ export class ChatBotService {
     );
     const mention = event.nickname ? `@${event.nickname}: ` : '';
     if (currentSong) {
-      if (currentSong.requested_by !== event.userId) {
+      // 스트리머, 매니저, 곡 등록한 유저만 스킵 가능
+      if (
+        event.role !== 'streamer' &&
+        event.role !== 'manager' &&
+        currentSong.requested_by !== event.userId
+      ) {
         this.sendChat(
           event.service,
           event.channelId,
