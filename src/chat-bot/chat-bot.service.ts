@@ -218,7 +218,7 @@ export class ChatBotService {
     this.sendChat(
       event.service,
       event.channelId,
-      '명령어: !sr <url>, !sl, !우롱송, !명령어',
+      '명령어: !sr <url>, !sl, !clear, !우롱송, !명령어',
     );
   };
 
@@ -283,6 +283,29 @@ export class ChatBotService {
     }
   };
 
+  private readonly _clear = async (event: ChatMessageEvent) => {
+    // 대기열을 비운다. 스트리머만 사용할 수 있다.
+    if (event.role !== 'streamer' && event.role !== 'manager') {
+      this.sendChat(
+        event.service,
+        event.channelId,
+        '스트리머 혹은 매니저만 사용할 수 있습니다.',
+      );
+      return;
+    }
+    try {
+      await this.songRequestService.clearQueue(event.channelId);
+      this.sendChat(event.service, event.channelId, '대기열을 비웠습니다.');
+    } catch (e) {
+      this.logger.error(`대기열 비우는 도중 에러 발생: ${e}`);
+      this.sendChat(
+        event.service,
+        event.channelId,
+        '대기열을 비우는 데 실패했습니다.',
+      );
+    }
+  };
+
   private registerCommands() {
     this.commands.push(
       {
@@ -308,6 +331,10 @@ export class ChatBotService {
       {
         command: '!cs',
         func: this._currentSong,
+      },
+      {
+        command: '!clear',
+        func: this._clear,
       },
     );
   }
@@ -341,6 +368,10 @@ export class ChatBotService {
       {
         alias: '!니',
         command: '!sl',
+      },
+      {
+        alias: '!클리어',
+        command: '!clear',
       },
     );
   }
