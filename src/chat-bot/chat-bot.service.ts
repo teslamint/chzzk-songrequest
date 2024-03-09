@@ -3,6 +3,7 @@ import ytdl from 'ytdl-core';
 import { SongRequestService } from '../song-request/song-request.service';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { ChatMessageEvent, SendChatMessageEvent } from './chat-bot.events';
+import { SongRequestClearedEvent } from '../song-request/song-request.event';
 
 @Injectable()
 export class ChatBotService {
@@ -299,6 +300,10 @@ export class ChatBotService {
     }
     try {
       await this.songRequestService.clearQueue(event.channelId);
+      this.eventEmitter.emit(
+        'songRequest.cleared',
+        new SongRequestClearedEvent(event.channelId),
+      );
       this.sendChat(event.service, event.channelId, '대기열을 비웠습니다.');
     } catch (e) {
       this.logger.error(`대기열 비우는 도중 에러 발생: ${e}`);

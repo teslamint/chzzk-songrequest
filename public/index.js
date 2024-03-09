@@ -216,6 +216,13 @@ class Widget {
         playNextSong();
       });
 
+      socket.on('clear_list_' + channelId, () => {
+        console.debug('clear song queue');
+        while (songRequests.length > 0) {
+          songRequests.pop();
+        }
+      });
+
       socket.on('connect', () => {
         const data = { id: channelId };
         socket.emit('init', data);
