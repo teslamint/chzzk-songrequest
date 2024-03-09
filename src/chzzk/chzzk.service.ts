@@ -76,6 +76,21 @@ export class ChzzkService {
       const message = chat.hidden ? '[블라인드 처리 됨]' : chat.message;
       this.logger.debug(`${chat.profile.nickname}: ${message}`);
 
+      const userRole = ((role) => {
+        switch (role) {
+          case 'common_user':
+            return 'user';
+          case 'streamer':
+            return 'streamer';
+          case 'manager':
+          case 'streaming_channel_manager':
+          case 'streaming_chat_manager':
+            return 'manager';
+          default:
+            return 'unknown';
+        }
+      })(chat.profile.userRoleCode);
+
       this.eventEmitter.emit(
         'chat.message',
         new ChatMessageEvent({
@@ -84,6 +99,7 @@ export class ChzzkService {
           message: message,
           timestamp: chat.time,
           userId: chat.profile.userIdHash,
+          role: userRole,
           nickname: chat.profile.nickname,
           extras: {
             hidden: chat.hidden,

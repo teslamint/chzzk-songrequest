@@ -163,4 +163,13 @@ export class SongRequestService {
       },
     });
   }
+
+  async clearQueue(channelId: string) {
+    await this.prisma.songRequest.deleteMany({
+      where: {
+        channel_id: channelId,
+        status: 'PENDING',
+      },
+    });
+  }
 }

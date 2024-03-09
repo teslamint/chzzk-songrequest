@@ -2,11 +2,14 @@ interface ChatMessageEventExtraInterface {
   [key: string]: any;
 }
 
+declare type ChatUserRole = 'streamer' | 'manager' | 'user' | 'unknown';
+
 export class ChatMessageEvent {
   readonly service: string;
   readonly channelId: string;
   readonly nickname?: string;
   readonly userId: string;
+  readonly role: ChatUserRole;
   readonly message: string;
   readonly timestamp: number;
   readonly extras: Readonly<ChatMessageEventExtraInterface>;
@@ -17,6 +20,7 @@ export class ChatMessageEvent {
     message: string;
     timestamp: number;
     userId: string;
+    role: ChatUserRole;
     nickname?: string;
     extras?: object;
   }) {
@@ -25,6 +29,7 @@ export class ChatMessageEvent {
     this.message = args.message;
     this.timestamp = args.timestamp;
     this.userId = args.userId;
+    this.role = args.role;
     if (args.nickname) {
       this.nickname = args.nickname;
     }
