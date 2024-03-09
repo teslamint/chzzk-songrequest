@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ChzzkService } from './chzzk.service';
 import { ConfigModule } from '@nestjs/config';
-import { SongRequestModule } from '../song-request/song-request.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
-  imports: [ConfigModule, SongRequestModule],
+  imports: [ConfigModule, EventEmitterModule],
   providers: [ChzzkService],
 })
 export class ChzzkModule {}
