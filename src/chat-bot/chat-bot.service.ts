@@ -222,7 +222,7 @@ export class ChatBotService {
     this.sendChat(
       event.service,
       event.channelId,
-      '명령어: !sr <url>, !sl, !clear, !우롱송, !명령어',
+      '명령어: !sr <url>, !sl, !cs, !skip, !clear, !우롱송, !명령어',
     );
   };
 
