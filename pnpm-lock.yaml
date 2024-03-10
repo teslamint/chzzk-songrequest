@@ -54,8 +54,8 @@ dependencies:
     specifier: ^5.4.0
     version: 5.4.0
   chzzk:
-    specifier: ^1.4.2
-    version: 1.4.2
+    specifier: ^1.6.0
+    version: 1.6.0
   handlebars:
     specifier: ^4.7.8
     version: 4.7.8
@@ -2631,8 +2631,8 @@ packages:
     engines: {node: '>=6.0'}
     dev: true
 
-  /chzzk@1.4.2:
-    resolution: {integrity: sha512-nRKT4aPvEMwf9TlCZL0aSvqGJK947vVHnD3Hveq+ah48KCxF4zXr/TYkKp7Il23Qa4uH+YZdoK3zTLf8jVNCkA==}
+  /chzzk@1.6.0:
+    resolution: {integrity: sha512-lwF5DgaIWVhqIBvbz1f6ve9dV5JpQa0IvblBWYAeEITL71919F6Wnp6jTdKm7/OI7jI0FLTow/cqTxSGp2FEvQ==}
     dependencies:
       isomorphic-ws: 5.0.0(ws@8.16.0)
       ws: 8.16.0
