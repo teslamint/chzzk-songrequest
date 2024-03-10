@@ -84,6 +84,16 @@ class Widget {
       }
     };
 
+    const onPlayerError = (event) => {
+      switch (event.data) {
+        case 100:
+        case 101:
+        case 150:
+          // video owner not allowed to play video on embed or video is private or deleted
+          playNextSong();
+      }
+    };
+
     const createPlayer = (id) => {
       if (player || isPlayerReady) {
         return;
@@ -102,6 +112,7 @@ class Widget {
         events: {
           onReady: onPlayerReady,
           onStateChange: onPlayerStateChange,
+          onError: onPlayerError,
         },
       });
     };
