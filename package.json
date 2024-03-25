@@ -42,7 +42,7 @@
     "prisma": "^5.10.2",
     "reflect-metadata": "^0.2.1",
     "rxjs": "^7.8.1",
-    "socket.io": "^4.7.4",
+    "socket.io": "^4.7.5",
     "ulidx": "^2.3.0",
     "ytdl-core": "^4.11.5"
   },
