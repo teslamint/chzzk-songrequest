@@ -29,4 +29,4 @@ COPY ./views ./views/
 COPY ./prisma ./prisma/
 COPY docker-entrypoint.sh /app/
 
-CMD [ "/app/docker-entrypoint.sh" ]
+ENTRYPOINT [ "/app/docker-entrypoint.sh" ]
