@@ -102,6 +102,7 @@ class Widget {
         width: '640',
         height: '360',
         videoId: id,
+        host: 'https://www.youtube-nocookie.com',
         playerVars: {
           autoplay: 1,
           controls: 0,
