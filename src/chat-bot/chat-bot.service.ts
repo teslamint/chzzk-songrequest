@@ -170,12 +170,45 @@ export class ChatBotService {
     }
   };
 
-  private readonly _songList = async (event: ChatMessageEvent) => {
+  private readonly _songList = async (
+    event: ChatMessageEvent,
+    args?: string,
+  ) => {
     const mention = event.nickname ? `@${event.nickname}: ` : '';
     // 큐 목록 정보 전송
     const count = await this.songRequestService.requestCountByChannelId(
       event.channelId,
     );
+    if (!count) {
+      this.sendChat(
+        event.service,
+        event.channelId,
+        `${mention}대기열이 비어있습니다.`,
+      );
+      return;
+    }
+    if (args) {
+      // 특정 순서의 곡 정보를 전송한다.
+      const order = parseInt(args, 10);
+      const song = await this.songRequestService.getSong(
+        event.channelId,
+        order,
+      );
+      if (song) {
+        this.sendChat(
+          event.service,
+          event.channelId,
+          `${mention}${order}번째 곡: ${song.title}`,
+        );
+      } else {
+        this.sendChat(
+          event.service,
+          event.channelId,
+          `${mention}대기열에 해당 순서의 곡이 없습니다.`,
+        );
+      }
+      return;
+    }
     const totalDuration =
       await this.songRequestService.requestTotalDurationByChannelId(
         event.channelId,
@@ -223,7 +256,7 @@ export class ChatBotService {
     this.sendChat(
       event.service,
       event.channelId,
-      '명령어: !sr <url>, !sl, !sd <number>, !cs, !skip, !clear, !우롱송, !명령어',
+      '명령어: !sr <url>, !sl [number], !sd <number>, !cs, !skip, !clear, !우롱송, !명령어',
     );
   };
 
