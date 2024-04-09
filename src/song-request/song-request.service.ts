@@ -172,4 +172,26 @@ export class SongRequestService {
       },
     });
   }
+
+  /**
+   * 대기열에서 특정 순서의 곡을 가져온다.
+   * @param channelId
+   * @param order
+   */
+  async getSong(channelId: string, order?: number) {
+    if (!order) {
+      return null;
+    }
+    return this.prisma.songRequest.findFirst({
+      where: {
+        channel_id: channelId,
+        status: 'PENDING',
+      },
+      take: 1,
+      skip: order - 1,
+      orderBy: {
+        id: 'asc',
+      },
+    });
+  }
 }
