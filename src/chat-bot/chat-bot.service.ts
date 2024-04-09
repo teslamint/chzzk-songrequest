@@ -223,7 +223,7 @@ export class ChatBotService {
     this.sendChat(
       event.service,
       event.channelId,
-      '명령어: !sr <url>, !sl, !cs, !skip, !clear, !우롱송, !명령어',
+      '명령어: !sr <url>, !sl, !sd <number>, !cs, !skip, !clear, !우롱송, !명령어',
     );
   };
 
@@ -320,6 +320,47 @@ export class ChatBotService {
     }
   };
 
+  private readonly _delete = async (event: ChatMessageEvent, args?: string) => {
+    // 대기 목록에서 지정한 순서의 곡을 삭제한다.
+    const order = parseInt(args, 10);
+    try {
+      const song = await this.songRequestService.getSong(
+        event.channelId,
+        order,
+      );
+      if (!song) {
+        this.sendChat(
+          event.service,
+          event.channelId,
+          '대기열에 해당 순서의 곡이 없습니다.',
+        );
+      }
+      if (song.requested_by != event.userId) {
+        this.sendChat(
+          event.service,
+          event.channelId,
+          '신청한 곡만 삭제할 수 있습니다.',
+        );
+        return;
+      }
+      await this.songRequestService.deleteRequest({
+        id: song.id,
+      });
+      this.sendChat(
+        event.service,
+        event.channelId,
+        `${song.title} 곡을 대기열에서 삭제했습니다.`,
+      );
+    } catch (e) {
+      this.logger.error(`대기열 삭제 중 에러 발생: ${e}`);
+      this.sendChat(
+        event.service,
+        event.channelId,
+        '대기열 삭제 중 에러가 발생했습니다.',
+      );
+    }
+  };
+
   private registerCommands() {
     this.commands.push(
       {
@@ -349,6 +390,10 @@ export class ChatBotService {
       {
         command: '!clear',
         func: this._clear,
+      },
+      {
+        command: '!sd',
+        func: this._delete,
       },
     );
   }
@@ -386,6 +431,10 @@ export class ChatBotService {
       {
         alias: '!클리어',
         command: '!clear',
+      },
+      {
+        alias: '!삭제',
+        command: '!sd',
       },
     );
   }
