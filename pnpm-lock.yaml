@@ -33,8 +33,8 @@ dependencies:
     specifier: ^2.0.4
     version: 2.0.4(@nestjs/common@10.3.8)(@nestjs/core@10.3.7)
   '@nestjs/platform-fastify':
-    specifier: ^10.3.7
-    version: 10.3.7(@fastify/static@7.0.3)(@fastify/view@9.0.0)(@nestjs/common@10.3.8)(@nestjs/core@10.3.7)
+    specifier: ^10.3.8
+    version: 10.3.8(@fastify/static@7.0.3)(@fastify/view@9.0.0)(@nestjs/common@10.3.8)(@nestjs/core@10.3.7)
   '@nestjs/platform-socket.io':
     specifier: ^10.3.7
     version: 10.3.7(@nestjs/common@10.3.8)(@nestjs/websockets@10.3.7)(rxjs@7.8.1)
@@ -1237,8 +1237,8 @@ packages:
       eventemitter2: 6.4.9
     dev: false
 
-  /@nestjs/platform-fastify@10.3.7(@fastify/static@7.0.3)(@fastify/view@9.0.0)(@nestjs/common@10.3.8)(@nestjs/core@10.3.7):
-    resolution: {integrity: sha512-J7ICAOC/zTSfJLTWwvVLK9LON+Dw/NdgPQwPBsi3GNIw3TLLXLrQ4WXnHNER8gnXS3sfKOIngRLusMirLqYjEQ==}
+  /@nestjs/platform-fastify@10.3.8(@fastify/static@7.0.3)(@fastify/view@9.0.0)(@nestjs/common@10.3.8)(@nestjs/core@10.3.7):
+    resolution: {integrity: sha512-gWGskBuZRB4LTQJCJWWUZvYwiF05zAJdq0X5oi6SmSZHP6bPIY+sQar+IwPFTsDtCM0Qk9nFm9UUuQdgLZTrTQ==}
     peerDependencies:
       '@fastify/static': ^6.0.0 || ^7.0.0
       '@fastify/view': ^7.0.0 || ^8.0.0
@@ -1258,7 +1258,7 @@ packages:
       '@nestjs/common': 10.3.8(reflect-metadata@0.2.2)(rxjs@7.8.1)
       '@nestjs/core': 10.3.7(@nestjs/common@10.3.8)(@nestjs/websockets@10.3.7)(reflect-metadata@0.2.2)(rxjs@7.8.1)
       fastify: 4.26.2
-      light-my-request: 5.12.0
+      light-my-request: 5.13.0
       path-to-regexp: 3.2.0
       tslib: 2.6.2
     transitivePeerDependencies:
@@ -3469,7 +3469,7 @@ packages:
       fast-content-type-parse: 1.1.0
       fast-json-stringify: 5.13.0
       find-my-way: 8.1.0
-      light-my-request: 5.12.0
+      light-my-request: 5.13.0
       pino: 8.20.0
       process-warning: 3.0.0
       proxy-addr: 2.0.7
@@ -4734,8 +4734,8 @@ packages:
       type-check: 0.4.0
     dev: true
 
-  /light-my-request@5.12.0:
-    resolution: {integrity: sha512-P526OX6E7aeCIfw/9UyJNsAISfcFETghysaWHQAlQYayynShT08MOj4c6fBCvTWBrHXSvqBAKDp3amUPSCQI4w==}
+  /light-my-request@5.13.0:
+    resolution: {integrity: sha512-9IjUN9ZyCS9pTG+KqTDEQo68Sui2lHsYBrfMyVUTTZ3XhH8PMZq7xO94Kr+eP9dhi/kcKsx4N41p2IXEBil1pQ==}
     dependencies:
       cookie: 0.6.0
       process-warning: 3.0.0
