@@ -19,7 +19,7 @@ dependencies:
     version: 10.1.1(@nestjs/common@10.3.8)(@nestjs/core@10.3.7)(bull@4.12.2)
   '@nestjs/cache-manager':
     specifier: ^2.2.2
-    version: 2.2.2(@nestjs/common@10.3.8)(@nestjs/core@10.3.7)(cache-manager@5.5.1)(rxjs@7.8.1)
+    version: 2.2.2(@nestjs/common@10.3.8)(@nestjs/core@10.3.7)(cache-manager@5.5.2)(rxjs@7.8.1)
   '@nestjs/common':
     specifier: ^10.3.8
     version: 10.3.8(reflect-metadata@0.2.2)(rxjs@7.8.1)
@@ -51,8 +51,8 @@ dependencies:
     specifier: ^4.12.2
     version: 4.12.2
   cache-manager:
-    specifier: ^5.5.1
-    version: 5.5.1
+    specifier: ^5.5.2
+    version: 5.5.2
   chzzk:
     specifier: ^1.8.0
     version: 1.8.0
@@ -1105,7 +1105,7 @@ packages:
       tslib: 2.6.2
     dev: false
 
-  /@nestjs/cache-manager@2.2.2(@nestjs/common@10.3.8)(@nestjs/core@10.3.7)(cache-manager@5.5.1)(rxjs@7.8.1):
+  /@nestjs/cache-manager@2.2.2(@nestjs/common@10.3.8)(@nestjs/core@10.3.7)(cache-manager@5.5.2)(rxjs@7.8.1):
     resolution: {integrity: sha512-+n7rpU1QABeW2WV17Dl1vZCG3vWjJU1MaamWgZvbGxYE9EeCM0lVLfw3z7acgDTNwOy+K68xuQPoIMxD0bhjlA==}
     peerDependencies:
       '@nestjs/common': ^9.0.0 || ^10.0.0
@@ -1115,7 +1115,7 @@ packages:
     dependencies:
       '@nestjs/common': 10.3.8(reflect-metadata@0.2.2)(rxjs@7.8.1)
       '@nestjs/core': 10.3.7(@nestjs/common@10.3.8)(@nestjs/websockets@10.3.8)(reflect-metadata@0.2.2)(rxjs@7.8.1)
-      cache-manager: 5.5.1
+      cache-manager: 5.5.2
       rxjs: 7.8.1
     dev: false
 
@@ -2577,12 +2577,12 @@ packages:
       - supports-color
     dev: false
 
-  /cache-manager@5.5.1:
-    resolution: {integrity: sha512-QYZFOjZTTennYdN3NNCKh+yq452+wQ4ChyL40jkEyghIgg5Ugwb4YO8ARIIF1fvTBkgDLlLTYFaxZVaPGmQ92A==}
+  /cache-manager@5.5.2:
+    resolution: {integrity: sha512-HozSRPCBB26O1ZVIzX8GjauYMoZOpWcArqRIFlPKr+Mm3o+p/6VcHxRt8ia0F/tMwZdKxpHG0M+Am5Qh9FmfKw==}
     dependencies:
       eventemitter3: 5.0.1
       lodash.clonedeep: 4.5.0
-      lru-cache: 10.2.0
+      lru-cache: 10.2.2
       promise-coalesce: 1.1.2
     dev: false
 
@@ -4804,6 +4804,11 @@ packages:
   /lru-cache@10.2.0:
     resolution: {integrity: sha512-2bIM8x+VAf6JT4bKAljS1qUWgMsqZRPGJS6FSahIMPVvctcNhyVp7AJu7quxOW9jwkryBReKZY5tY5JYv2n/7Q==}
     engines: {node: 14 || >=16.14}
+
+  /lru-cache@10.2.2:
+    resolution: {integrity: sha512-9hp3Vp2/hFQUiIwKo8XCeFVnrg8Pk3TYNPIR7tJADKi5YfcF7vEaK7avFHTlSy3kOKYaJQaalfEo6YuXdceBOQ==}
+    engines: {node: 14 || >=16.14}
+    dev: false
 
   /lru-cache@4.1.5:
     resolution: {integrity: sha512-sWZlbEP2OsHNkXrMl5GYk/jKk70MBng6UU4YI/qGDYbgf6YbP4EvmqISbXCoJiRKs+1bSpFHVgQxvJ17F2li5g==}
