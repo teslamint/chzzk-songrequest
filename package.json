@@ -31,7 +31,7 @@
     "@nestjs/event-emitter": "^2.0.4",
     "@nestjs/platform-fastify": "^10.3.8",
     "@nestjs/platform-socket.io": "^10.3.8",
-    "@nestjs/schedule": "^4.0.1",
+    "@nestjs/schedule": "^4.0.2",
     "@nestjs/websockets": "^10.3.8",
     "@prisma/client": "^5.13.0",
     "bull": "^4.12.2",
