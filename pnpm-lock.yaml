@@ -19,7 +19,7 @@ dependencies:
     version: 10.1.1(@nestjs/common@10.3.8)(@nestjs/core@10.3.8)(bull@4.12.2)
   '@nestjs/cache-manager':
     specifier: ^2.2.2
-    version: 2.2.2(@nestjs/common@10.3.8)(@nestjs/core@10.3.8)(cache-manager@5.5.2)(rxjs@7.8.1)
+    version: 2.2.2(@nestjs/common@10.3.8)(@nestjs/core@10.3.8)(cache-manager@5.5.3)(rxjs@7.8.1)
   '@nestjs/common':
     specifier: ^10.3.8
     version: 10.3.8(reflect-metadata@0.2.2)(rxjs@7.8.1)
@@ -51,8 +51,8 @@ dependencies:
     specifier: ^4.12.2
     version: 4.12.2
   cache-manager:
-    specifier: ^5.5.2
-    version: 5.5.2
+    specifier: ^5.5.3
+    version: 5.5.3
   chzzk:
     specifier: ^1.9.0
     version: 1.9.0
@@ -1105,7 +1105,7 @@ packages:
       tslib: 2.6.2
     dev: false
 
-  /@nestjs/cache-manager@2.2.2(@nestjs/common@10.3.8)(@nestjs/core@10.3.8)(cache-manager@5.5.2)(rxjs@7.8.1):
+  /@nestjs/cache-manager@2.2.2(@nestjs/common@10.3.8)(@nestjs/core@10.3.8)(cache-manager@5.5.3)(rxjs@7.8.1):
     resolution: {integrity: sha512-+n7rpU1QABeW2WV17Dl1vZCG3vWjJU1MaamWgZvbGxYE9EeCM0lVLfw3z7acgDTNwOy+K68xuQPoIMxD0bhjlA==}
     peerDependencies:
       '@nestjs/common': ^9.0.0 || ^10.0.0
@@ -1115,7 +1115,7 @@ packages:
     dependencies:
       '@nestjs/common': 10.3.8(reflect-metadata@0.2.2)(rxjs@7.8.1)
       '@nestjs/core': 10.3.8(@nestjs/common@10.3.8)(@nestjs/websockets@10.3.8)(reflect-metadata@0.2.2)(rxjs@7.8.1)
-      cache-manager: 5.5.2
+      cache-manager: 5.5.3
       rxjs: 7.8.1
     dev: false
 
@@ -2568,8 +2568,8 @@ packages:
       - supports-color
     dev: false
 
-  /cache-manager@5.5.2:
-    resolution: {integrity: sha512-HozSRPCBB26O1ZVIzX8GjauYMoZOpWcArqRIFlPKr+Mm3o+p/6VcHxRt8ia0F/tMwZdKxpHG0M+Am5Qh9FmfKw==}
+  /cache-manager@5.5.3:
+    resolution: {integrity: sha512-Td6F8lZE/YCciSi8xmdBjur6zlKIcoLMZp9jTmJNc44DrXIIcEhr9gra5j1T7RRbtWHaG5tJMEBKS+0S1+T2NQ==}
     dependencies:
       eventemitter3: 5.0.1
       lodash.clonedeep: 4.5.0
