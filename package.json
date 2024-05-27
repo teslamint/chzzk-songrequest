@@ -20,7 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@fastify/static": "^7.0.3",
+    "@fastify/static": "^7.0.4",
     "@fastify/view": "^9.1.0",
     "@neondatabase/serverless": "^0.9.1",
     "@nestjs/bull": "^10.1.1",
