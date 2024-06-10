@@ -33,7 +33,7 @@
     "@nestjs/platform-socket.io": "^10.3.8",
     "@nestjs/schedule": "^4.0.2",
     "@nestjs/websockets": "^10.3.8",
-    "@prisma/client": "^5.14.0",
+    "@prisma/client": "^5.15.0",
     "bull": "^4.12.2",
     "cache-manager": "^5.5.3",
     "chzzk": "^1.10.1",
