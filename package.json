@@ -34,7 +34,7 @@
     "@nestjs/schedule": "^4.0.2",
     "@nestjs/websockets": "^10.3.10",
     "@prisma/client": "^5.15.0",
-    "bull": "^4.14.0",
+    "bull": "^4.15.1",
     "cache-manager": "^5.7.1",
     "chzzk": "^1.10.1",
     "handlebars": "^4.7.8",
