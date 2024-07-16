@@ -47,7 +47,7 @@
     "ytdl-core": "^4.11.5"
   },
   "devDependencies": {
-    "@nestjs/cli": "^10.3.2",
+    "@nestjs/cli": "^10.4.2",
     "@nestjs/schematics": "^10.1.2",
     "@nestjs/testing": "^10.3.9",
     "@swc/cli": "^0.3.12",
