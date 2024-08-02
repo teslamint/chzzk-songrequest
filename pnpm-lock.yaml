@@ -15,8 +15,8 @@ importers:
         specifier: ^9.1.0
         version: 9.1.0
       '@neondatabase/serverless':
-        specifier: ^0.9.3
-        version: 0.9.3
+        specifier: ^0.9.4
+        version: 0.9.4
       '@nestjs/bull':
         specifier: ^10.1.1
         version: 10.1.1(@nestjs/common@10.3.10(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@10.3.10(@nestjs/common@10.3.10(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/websockets@10.3.10)(reflect-metadata@0.2.2)(rxjs@7.8.1))(bull@4.15.1)
@@ -582,8 +582,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@neondatabase/serverless@0.9.3':
-    resolution: {integrity: sha512-6ZBK8asl2Z3+ADEaELvbaVVGVlmY1oAzkxxZfpmXPKFuJhbDN+5fU3zYBamsahS/Ch1zE+CVWB3R+8QEI2LMSw==}
+  '@neondatabase/serverless@0.9.4':
+    resolution: {integrity: sha512-D0AXgJh6xkf+XTlsO7iwE2Q1w8981E1cLCPAALMU2YKtkF/1SF6BiAzYARZFYo175ON+b1RNIy9TdSFHm5nteg==}
 
   '@nestjs/bull-shared@10.1.1':
     resolution: {integrity: sha512-su7eThDrSz1oQagEi8l+1CyZ7N6nMgmyAX0DuZoXqT1KEVEDqGX7x80RlPVF60m/8SYOskckGMjJROSfNQcErw==}
@@ -4219,7 +4219,7 @@ snapshots:
   '@msgpackr-extract/msgpackr-extract-win32-x64@3.0.3':
     optional: true
 
-  '@neondatabase/serverless@0.9.3':
+  '@neondatabase/serverless@0.9.4':
     dependencies:
       '@types/pg': 8.11.6
 
