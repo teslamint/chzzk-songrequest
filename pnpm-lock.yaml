@@ -86,7 +86,7 @@ importers:
     devDependencies:
       '@nestjs/cli':
         specifier: ^10.4.2
-        version: 10.4.2(@swc/cli@0.3.12(@swc/core@1.6.6)(chokidar@3.6.0))(@swc/core@1.6.6)
+        version: 10.4.2(@swc/cli@0.4.0(@swc/core@1.6.6)(chokidar@3.6.0))(@swc/core@1.6.6)
       '@nestjs/schematics':
         specifier: ^10.1.2
         version: 10.1.2(chokidar@3.6.0)(typescript@5.5.3)
@@ -94,8 +94,8 @@ importers:
         specifier: ^10.3.10
         version: 10.3.10(@nestjs/common@10.3.10(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@10.3.10(@nestjs/common@10.3.10(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/websockets@10.3.10)(reflect-metadata@0.2.2)(rxjs@7.8.1))
       '@swc/cli':
-        specifier: ^0.3.12
-        version: 0.3.12(@swc/core@1.6.6)(chokidar@3.6.0)
+        specifier: ^0.4.0
+        version: 0.4.0(@swc/core@1.6.6)(chokidar@3.6.0)
       '@swc/core':
         specifier: ^1.6.6
         version: 1.6.6
@@ -791,8 +791,8 @@ packages:
   '@socket.io/component-emitter@3.1.0':
     resolution: {integrity: sha512-+9jVqKhRSpsc591z5vX+X5Yyw+he/HCB4iQ/RYxw35CEPaY1gnsNE43nf9n9AaYjAQrTiI/mOwKUKdUs9vf7Xg==}
 
-  '@swc/cli@0.3.12':
-    resolution: {integrity: sha512-h7bvxT+4+UDrLWJLFHt6V+vNAcUNii2G4aGSSotKz1ECEk4MyEh5CWxmeSscwuz5K3i+4DWTgm4+4EyMCQKn+g==}
+  '@swc/cli@0.4.0':
+    resolution: {integrity: sha512-4JdVrPtF/4rCMXp6Q1h5I6YkYZrCCcqod7Wk97ZQq7K8vNGzJUryBv4eHCvqx5sJOJBrbYm9fcswe1B0TygNoA==}
     engines: {node: '>= 16.14.0'}
     hasBin: true
     peerDependencies:
@@ -4244,7 +4244,7 @@ snapshots:
       cache-manager: 5.7.3
       rxjs: 7.8.1
 
-  '@nestjs/cli@10.4.2(@swc/cli@0.3.12(@swc/core@1.6.6)(chokidar@3.6.0))(@swc/core@1.6.6)':
+  '@nestjs/cli@10.4.2(@swc/cli@0.4.0(@swc/core@1.6.6)(chokidar@3.6.0))(@swc/core@1.6.6)':
     dependencies:
       '@angular-devkit/core': 17.3.8(chokidar@3.6.0)
       '@angular-devkit/schematics': 17.3.8(chokidar@3.6.0)
@@ -4266,7 +4266,7 @@ snapshots:
       webpack: 5.92.1(@swc/core@1.6.6)
       webpack-node-externals: 3.0.0
     optionalDependencies:
-      '@swc/cli': 0.3.12(@swc/core@1.6.6)(chokidar@3.6.0)
+      '@swc/cli': 0.4.0(@swc/core@1.6.6)(chokidar@3.6.0)
       '@swc/core': 1.6.6
     transitivePeerDependencies:
       - esbuild
@@ -4459,7 +4459,7 @@ snapshots:
 
   '@socket.io/component-emitter@3.1.0': {}
 
-  '@swc/cli@0.3.12(@swc/core@1.6.6)(chokidar@3.6.0)':
+  '@swc/cli@0.4.0(@swc/core@1.6.6)(chokidar@3.6.0)':
     dependencies:
       '@mole-inc/bin-wrapper': 8.0.1
       '@swc/core': 1.6.6
