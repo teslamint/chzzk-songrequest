@@ -42,8 +42,8 @@ importers:
         specifier: ^10.3.10
         version: 10.3.10(@nestjs/common@10.3.10(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/websockets@10.4.1)(rxjs@7.8.1)
       '@nestjs/schedule':
-        specifier: ^4.0.2
-        version: 4.0.2(@nestjs/common@10.3.10(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@10.4.1(@nestjs/common@10.3.10(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/websockets@10.4.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))
+        specifier: ^4.1.0
+        version: 4.1.0(@nestjs/common@10.3.10(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@10.4.1(@nestjs/common@10.3.10(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/websockets@10.4.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))
       '@nestjs/websockets':
         specifier: ^10.4.1
         version: 10.4.1(@nestjs/common@10.3.10(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@10.4.1)(@nestjs/platform-socket.io@10.3.10)(reflect-metadata@0.2.2)(rxjs@7.8.1)
@@ -681,8 +681,8 @@ packages:
       '@nestjs/websockets': ^10.0.0
       rxjs: ^7.1.0
 
-  '@nestjs/schedule@4.0.2':
-    resolution: {integrity: sha512-po9oauE7fO0CjhDKvVC2tzEgjOUwhxYoIsXIVkgfu+xaDMmzzpmXY2s1LT4oP90Z+PaTtPoAHmhslnYmo4mSZg==}
+  '@nestjs/schedule@4.1.0':
+    resolution: {integrity: sha512-WEc96WTXZW+VI/Ng+uBpiBUwm6TWtAbQ4RKWkfbmzKvmbRGzA/9k/UyAWDS9k0pp+ZcbC+MaZQtt7TjQHrwX6g==}
     peerDependencies:
       '@nestjs/common': ^8.0.0 || ^9.0.0 || ^10.0.0
       '@nestjs/core': ^8.0.0 || ^9.0.0 || ^10.0.0
@@ -3510,12 +3510,12 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
-  uuid@8.3.2:
-    resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
+  uuid@10.0.0:
+    resolution: {integrity: sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==}
     hasBin: true
 
-  uuid@9.0.1:
-    resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
+  uuid@8.3.2:
+    resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
     hasBin: true
 
   v8-compile-cache-lib@3.0.1:
@@ -4365,12 +4365,12 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@nestjs/schedule@4.0.2(@nestjs/common@10.3.10(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@10.4.1(@nestjs/common@10.3.10(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/websockets@10.4.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))':
+  '@nestjs/schedule@4.1.0(@nestjs/common@10.3.10(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@10.4.1(@nestjs/common@10.3.10(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/websockets@10.4.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))':
     dependencies:
       '@nestjs/common': 10.3.10(reflect-metadata@0.2.2)(rxjs@7.8.1)
       '@nestjs/core': 10.4.1(@nestjs/common@10.3.10(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/websockets@10.4.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)
       cron: 3.1.7
-      uuid: 9.0.1
+      uuid: 10.0.0
 
   '@nestjs/schematics@10.1.3(chokidar@3.6.0)(typescript@5.3.3)':
     dependencies:
@@ -7461,9 +7461,9 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
-  uuid@8.3.2: {}
+  uuid@10.0.0: {}
 
-  uuid@9.0.1: {}
+  uuid@8.3.2: {}
 
   v8-compile-cache-lib@3.0.1: {}
 
