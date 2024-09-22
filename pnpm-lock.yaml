@@ -57,8 +57,8 @@ importers:
         specifier: ^5.7.3
         version: 5.7.3
       chzzk:
-        specifier: ^1.10.1
-        version: 1.10.1
+        specifier: ^1.10.4
+        version: 1.10.4
       handlebars:
         specifier: ^4.7.8
         version: 4.7.8
@@ -1398,8 +1398,8 @@ packages:
     resolution: {integrity: sha512-p3KULyQg4S7NIHixdwbGX+nFHkoBiA4YQmyWtjb8XngSKV124nJmRysgAeujbUVb15vh+RvFUfCPqU7rXk+hZg==}
     engines: {node: '>=6.0'}
 
-  chzzk@1.10.1:
-    resolution: {integrity: sha512-ejiqzYXOKfKt1+FEJJLJ+aDyGoVyn11IIF4HDsUrUgJxvVUArqCVQzUqq7cqSrEynVApYF9J2x7Ynqar6k9D4g==}
+  chzzk@1.10.4:
+    resolution: {integrity: sha512-FIjZm9pi8ZE/OJQNXpUYL+mUY9HkTdNT3Ry0vvKR35qlhddf/Y5xJRpkZ8+GXD2ISqcDaxxEeDjHwqAcE58NMw==}
 
   ci-info@3.9.0:
     resolution: {integrity: sha512-NIxF55hv4nSqQswkAeiOi1r83xy8JldOFDTWiug55KBu9Jnblncd2U6ViHmYgHf01TPZS77NJBhBMKdWj9HQMQ==}
@@ -5177,7 +5177,7 @@ snapshots:
 
   chrome-trace-event@1.0.3: {}
 
-  chzzk@1.10.1:
+  chzzk@1.10.4:
     dependencies:
       isomorphic-ws: 5.0.0(ws@8.16.0)
       ws: 8.16.0
