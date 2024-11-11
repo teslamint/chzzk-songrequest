@@ -22,7 +22,7 @@
   "dependencies": {
     "@fastify/static": "^7.0.4",
     "@fastify/view": "^10.0.1",
-    "@neondatabase/serverless": "^0.9.5",
+    "@neondatabase/serverless": "^0.10.3",
     "@nestjs/bull": "^10.2.1",
     "@nestjs/cache-manager": "^2.2.2",
     "@nestjs/common": "^10.4.4",
