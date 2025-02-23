@@ -3,7 +3,6 @@ set -euo pipefail
 
 cd /app
 
-pnpm prisma generate
-pnpm prisma migrate deploy
+pnpx prisma migrate deploy
 
 pnpm start:prod
