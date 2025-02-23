@@ -12,11 +12,13 @@ RUN --mount=type=cache,id=pnpm,target=/root/.pnpm-store/v3 pnpm install
 FROM deps AS build
 
 WORKDIR /app
+COPY ./prisma ./prisma/
 COPY ./src ./src/
 COPY ./tsconfig*.json ./
 COPY ./nest-cli.json ./
 COPY --from=deps /app/node_modules ./node_modules/
 RUN pnpm build
+RUN pnpm prisma generate
 RUN pnpm prune --prod
 
 FROM base AS final
