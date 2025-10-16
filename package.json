@@ -55,7 +55,7 @@
     "@types/jest": "^29.5.14",
     "@types/node": "^22.13.5",
     "@types/supertest": "^6.0.2",
-    "@types/ws": "^8.5.14",
+    "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.32.1",
     "@typescript-eslint/parser": "^8.38.0",
     "eslint": "^9.21.0",
