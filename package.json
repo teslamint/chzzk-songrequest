@@ -32,7 +32,7 @@
     "@nestjs/platform-fastify": "^11.1.5",
     "@nestjs/platform-socket.io": "^11.0.10",
     "@nestjs/schedule": "^5.0.1",
-    "@nestjs/websockets": "^11.0.10",
+    "@nestjs/websockets": "^11.1.6",
     "@prisma/client": "^6.4.1",
     "bull": "^4.16.5",
     "cache-manager": "^6.4.0",
