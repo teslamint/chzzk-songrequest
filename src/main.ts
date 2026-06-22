@@ -23,7 +23,7 @@ async function bootstrap() {
     templates: path.join(__dirname, '..', 'views'),
   });
   const configService = app.get(ConfigService);
-  await app.listen(configService.get('PORT'), '0.0.0.0');
+  await app.listen({ port: Number(configService.get('PORT')), host: '0.0.0.0' });
 }
 
 bootstrap().then(() => {});
