@@ -1,47 +1,60 @@
 import { Injectable, Logger } from '@nestjs/common';
-import ytdl from 'ytdl-core';
+import * as ytdl from 'ytdl-core';
 import { SongRequestService } from '../song-request/song-request.service';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { ChatMessageEvent, SendChatMessageEvent } from './chat-bot.events';
 import { SongRequestClearedEvent } from '../song-request/song-request.event';
 
+interface Command {
+  command: string;
+  func: (event: ChatMessageEvent, args?: string) => void | Promise<void>;
+}
+
+interface Alias {
+  alias: string;
+  command: string;
+}
+
 @Injectable()
 export class ChatBotService {
   private readonly logger = new Logger(ChatBotService.name);
-  private readonly aliases: { alias: string; command: string }[] = [];
-  private readonly commands: {
-    command: string;
-    func: (event: ChatMessageEvent, args?: string) => void | Promise<void>;
-  }[] = [];
+  private readonly aliases: Alias[] = [];
+  private readonly commands: Command[] = [];
 
   constructor(
-    private eventEmitter: EventEmitter2,
-    private songRequestService: SongRequestService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly songRequestService: SongRequestService,
   ) {
     this.registerCommands();
     this.registerAliases();
   }
 
-  async callCommand(cmd: string, args: string, event: ChatMessageEvent) {
-    const _isAlias = this.aliases.find((alias) => alias.alias == cmd);
-    if (_isAlias) {
-      cmd = _isAlias.command;
-    }
-    const _cmd = this.commands.find((command) => command.command == cmd);
-    if (_cmd) {
-      return _cmd.func(event, args);
+  private async executeCommand(
+    cmd: string,
+    args: string,
+    event: ChatMessageEvent,
+  ): Promise<void> {
+    const commandName = this.getCommandName(cmd);
+    const command = this.commands.find((c) => c.command === commandName);
+
+    if (command) {
+      await command.func(event, args);
     } else {
-      // command not found
-      this.logger.debug(`command not found: ${cmd}`);
+      this.logger.debug(`Command not found: ${cmd}`);
     }
+  }
+
+  private getCommandName(aliasOrCommand: string): string {
+    const alias = this.aliases.find((a) => a.alias === aliasOrCommand);
+    return alias ? alias.command : aliasOrCommand;
   }
 
   @OnEvent('chat.connect')
   private async handleConnectEvent(event: {
     service: string;
     channelId: string;
-  }) {
-    this.logger.debug('response to chat.connect event');
+  }): Promise<void> {
+    this.logger.debug('Response to chat.connect event');
     this.sendChat(
       event.service,
       event.channelId,
@@ -50,19 +63,18 @@ export class ChatBotService {
   }
 
   @OnEvent('chat.message')
-  private async handleMessageEvent(event: ChatMessageEvent) {
+  private async handleMessageEvent(event: ChatMessageEvent): Promise<void> {
     this.logger.debug('chat.message event received', { ...event });
     if (!event.message.startsWith('!')) {
-      // ignore not started exclamation mark
-      return;
+      return; // Ignore messages not starting with '!'
     }
-    // split chat message
+
     const [command, args] = event.message.split(/\s/, 2);
-    this.logger.debug(`call command: ${command}, ${args}`);
-    await this.callCommand(command, args, event);
+    this.logger.debug(`Executing command: ${command}, with args: ${args}`);
+    await this.executeCommand(command, args, event);
   }
 
-  private sendChat(service: string, channelId: string, message: string) {
+  private sendChat(service: string, channelId: string, message: string): void {
     this.eventEmitter.emit(
       'chat.send',
       new SendChatMessageEvent({
@@ -73,43 +85,56 @@ export class ChatBotService {
     );
   }
 
-  private readonly _songRequest = async (
+  private async validateAndGetYoutubeInfo(
+    url: string,
+    mention: string,
+    event: ChatMessageEvent,
+  ): Promise<{ info: ytdl.videoInfo; normalizedUrl: string } | null> {
+    if (!url || url.trim() == '') {
+      this.sendChat(
+        event.service,
+        event.channelId,
+        `${mention}주소를 입력해주세요.`,
+      );
+      return null;
+    }
+    // validate video ID
+    if (!ytdl.validateURL(url) && !ytdl.validateID(url)) {
+      this.sendChat(
+        event.service,
+        event.channelId,
+        `${mention}입력한 주소가 올바르지 않습니다.`,
+      );
+      return null;
+    }
+    const info = await ytdl.getInfo(ytdl.getURLVideoID(url));
+    // normalize url
+    const normalizedUrl =
+      'https://www.youtube.com/watch?v=' + ytdl.getVideoID(url);
+    return { info, normalizedUrl };
+  }
+
+  private async _songRequest(
     event: ChatMessageEvent,
     url: string,
-  ) => {
-    // youtube URL 체크
+  ): Promise<void> {
+    const mention = event.nickname ? `@${event.nickname}: ` : '';
+
     try {
-      const mention = event.nickname ? `@${event.nickname}: ` : '';
-      if (!url || url.trim() == '') {
-        this.sendChat(
-          event.service,
-          event.channelId,
-          `${mention}주소를 입력해주세요.`,
-        );
-        return;
-      }
-      // validate video ID
-      if (!ytdl.validateURL(url) && !ytdl.validateID(url)) {
-        this.sendChat(
-          event.service,
-          event.channelId,
-          `${mention}입력한 주소가 올바르지 않습니다.`,
-        );
-        return;
-      }
-      const info = await ytdl.getInfo(ytdl.getURLVideoID(url));
-      // normalize url
-      url = 'https://www.youtube.com/watch?v=' + ytdl.getVideoID(url);
+      const result = await this.validateAndGetYoutubeInfo(url, mention, event);
+      if (!result) return;
+      const { info, normalizedUrl } = result;
+
       const allowedToEmbed =
         info.videoDetails.isCrawlable && !info.videoDetails.isPrivate;
       this.logger.debug('요청 곡 정보', {
-        url: url,
+        url: normalizedUrl,
         title: info.videoDetails.title,
         length: info.videoDetails.lengthSeconds,
         is_family_safe: info.videoDetails.isFamilySafe,
         allowed_to_embed: allowedToEmbed,
       });
-      // 임베드 허용 어부 체크
+
       if (!allowedToEmbed) {
         this.sendChat(
           event.service,
@@ -118,18 +143,17 @@ export class ChatBotService {
         );
         return;
       }
-      // 중복 체크
+
       const isExists = await this.songRequestService
         .requests({
           where: {
             channel_id: event.channelId,
-            url: url,
+            url: normalizedUrl,
           },
           take: 1,
         })
-        .then((items) => {
-          return items.length > 0;
-        });
+        .then((items) => items.length > 0);
+
       if (isExists) {
         this.sendChat(
           event.service,
@@ -138,11 +162,11 @@ export class ChatBotService {
         );
         return;
       }
-      // add queue
+
       const item = await this.songRequestService.createRequest({
         id: '',
         service: 'YOUTUBE',
-        url: url,
+        url: normalizedUrl,
         title: info.videoDetails.title,
         channel_id: event.channelId,
         play_time: parseInt(info.videoDetails.lengthSeconds, 10),
@@ -150,35 +174,33 @@ export class ChatBotService {
         requested_by: event.userId,
         requested_at: new Date(event.timestamp),
       });
+
       this.logger.debug('대기열에 곡 등록', item);
       const items = await this.songRequestService.requestsByChannelId(
         event.channelId,
       );
-      const idx = items.findIndex((item) => item.url === url);
+      const idx = items.findIndex((song) => song.url === normalizedUrl);
       if (idx !== -1) {
-        this.eventEmitter.emit(
-          'chat.send',
-          new SendChatMessageEvent({
-            service: event.service,
-            channelId: event.channelId,
-            message: `${mention}<${item.title}> 재생목록에 ${items.length}번째로 추가되었습니다.`,
-          }),
+        this.sendChat(
+          event.service,
+          event.channelId,
+          `${mention}<${item.title}> 재생목록에 ${items.length}번째로 추가되었습니다.`,
         );
       }
     } catch (e) {
       this.logger.error(e);
     }
-  };
+  }
 
-  private readonly _songList = async (
+  private async _songList(
     event: ChatMessageEvent,
     args?: string,
-  ) => {
+  ): Promise<void> {
     const mention = event.nickname ? `@${event.nickname}: ` : '';
-    // 큐 목록 정보 전송
     const count = await this.songRequestService.requestCountByChannelId(
       event.channelId,
     );
+
     if (!count) {
       this.sendChat(
         event.service,
@@ -187,28 +209,42 @@ export class ChatBotService {
       );
       return;
     }
+
     if (args) {
-      // 특정 순서의 곡 정보를 전송한다.
-      const order = parseInt(args, 10);
-      const song = await this.songRequestService.getSong(
-        event.channelId,
-        order,
-      );
-      if (song) {
-        this.sendChat(
-          event.service,
-          event.channelId,
-          `${mention}${order}번째 곡: ${song.title}`,
-        );
-      } else {
-        this.sendChat(
-          event.service,
-          event.channelId,
-          `${mention}대기열에 해당 순서의 곡이 없습니다.`,
-        );
-      }
+      await this.sendSongByOrder(event, mention, args);
       return;
     }
+
+    await this.sendQueueSummary(event, mention, count);
+  }
+
+  private async sendSongByOrder(
+    event: ChatMessageEvent,
+    mention: string,
+    args: string,
+  ): Promise<void> {
+    const order = parseInt(args, 10);
+    const song = await this.songRequestService.getSong(event.channelId, order);
+    if (song) {
+      this.sendChat(
+        event.service,
+        event.channelId,
+        `${mention}${order}번째 곡: ${song.title}`,
+      );
+    } else {
+      this.sendChat(
+        event.service,
+        event.channelId,
+        `${mention}대기열에 해당 순서의 곡이 없습니다.`,
+      );
+    }
+  }
+
+  private async sendQueueSummary(
+    event: ChatMessageEvent,
+    mention: string,
+    count: number,
+  ): Promise<void> {
     const totalDuration =
       await this.songRequestService.requestTotalDurationByChannelId(
         event.channelId,
@@ -229,14 +265,14 @@ export class ChatBotService {
       event.channelId,
       `${mention}대기열 ${count}개, 총 길이: ${totalLengthMessage}`,
     );
-  };
+  }
 
-  private readonly _currentSong = async (event: ChatMessageEvent) => {
+  private async _currentSong(event: ChatMessageEvent): Promise<void> {
     const mention = event.nickname ? `@${event.nickname}: ` : '';
-    // 재생중인 곡 정보를 전송한다.
     const currentSong = await this.songRequestService.getCurrentSong(
       event.channelId,
     );
+
     if (currentSong) {
       this.sendChat(
         event.service,
@@ -250,84 +286,86 @@ export class ChatBotService {
         `${mention}재생 중인 곡이 없습니다.`,
       );
     }
-  };
+  }
 
-  private readonly _help = (event: ChatMessageEvent) => {
+  private _help(event: ChatMessageEvent): void {
     this.sendChat(
       event.service,
       event.channelId,
       '명령어: !sr <url>, !sl [number], !sd <number>, !cs, !skip, !clear, !우롱송, !명령어',
     );
-  };
+  }
 
-  private readonly _skip = async (event: ChatMessageEvent) => {
-    // 위젯에 재생중인 영상을 스킵하고 다음 영상을 재생하게 한다.
+  private async _skip(event: ChatMessageEvent): Promise<void> {
     const currentSong = await this.songRequestService.getCurrentSong(
       event.channelId,
     );
     const mention = event.nickname ? `@${event.nickname}: ` : '';
-    if (currentSong) {
-      // 스트리머, 매니저, 곡 등록한 유저만 스킵 가능
-      if (
-        event.role !== 'streamer' &&
-        event.role !== 'manager' &&
-        currentSong.requested_by !== event.userId
-      ) {
-        this.sendChat(
-          event.service,
-          event.channelId,
-          `${mention}등록한 곡이 아닙니다.`,
-        );
-        return;
-      }
-      await this.songRequestService.skipSong(currentSong);
-      this.sendChat(
-        event.service,
-        event.channelId,
-        `${mention}재생 중인 ${currentSong.title} 영상을 스킵합니다.`,
-      );
-    } else {
+
+    if (!currentSong) {
       this.sendChat(
         event.service,
         event.channelId,
         `${mention}재생중인 곡이 없습니다.`,
       );
+      return;
     }
-  };
 
-  private readonly _wrongSong = async (event: ChatMessageEvent) => {
+    if (
+      event.role !== 'streamer' &&
+      event.role !== 'manager' &&
+      currentSong.requested_by !== event.userId
+    ) {
+      this.sendChat(
+        event.service,
+        event.channelId,
+        `${mention}등록한 곡이 아닙니다.`,
+      );
+      return;
+    }
+
+    await this.songRequestService.skipSong(currentSong);
+    this.sendChat(
+      event.service,
+      event.channelId,
+      `${mention}재생 중인 ${currentSong.title} 영상을 스킵합니다.`,
+    );
+  }
+
+  private async _wrongSong(event: ChatMessageEvent): Promise<void> {
     this.logger.debug('remove last requested song');
-    // 유저가 마지막으로 등록한 곡을 대기열에서 삭제한다. 재생중인 경우는 제외한다.
     const item = await this.songRequestService.lastRequestByUser(
       event.channelId,
       event.userId,
     );
+
     if (item) {
-      await this.songRequestService
-        .deleteRequest({
+      try {
+        await this.songRequestService.deleteRequest({
           id: item.id,
-        })
-        .then(() => {
-          this.sendChat(
-            event.service,
-            event.channelId,
-            `${event.nickname ? '@' + event.nickname : ''}: 신청하신 ${item.title} 곡이 삭제되었습니다.`,
-          );
-        })
-        .catch((reason) => {
-          this.logger.warn('큐 삭제 실패', reason);
         });
+        this.sendChat(
+          event.service,
+          event.channelId,
+          `${
+            event.nickname ? '@' + event.nickname : ''
+          }: 신청하신 ${item.title} 곡이 삭제되었습니다.`,
+        );
+      } catch (reason) {
+        this.logger.warn('Failed to delete queue item', reason);
+      }
     } else {
       this.sendChat(
         event.service,
         event.channelId,
-        `${event.nickname ? '@' + event.nickname : ''}: 신청하신 곡이 없습니다.`,
+        `${
+          event.nickname ? '@' + event.nickname : ''
+        }: 신청하신 곡이 없습니다.`,
       );
     }
-  };
+  }
 
-  private readonly _clear = async (event: ChatMessageEvent) => {
-    // 대기열을 비운다. 스트리머만 사용할 수 있다.
+  private async _clear(event: ChatMessageEvent): Promise<void> {
     if (event.role !== 'streamer' && event.role !== 'manager') {
       this.sendChat(
         event.service,
@@ -336,6 +374,7 @@ export class ChatBotService {
       );
       return;
     }
+
     try {
       await this.songRequestService.clearQueue(event.channelId);
       this.eventEmitter.emit(
@@ -344,17 +383,16 @@ export class ChatBotService {
       );
       this.sendChat(event.service, event.channelId, '대기열을 비웠습니다.');
     } catch (e) {
-      this.logger.error(`대기열 비우는 도중 에러 발생: ${e}`);
+      this.logger.error(`Error clearing the queue: ${e}`);
       this.sendChat(
         event.service,
         event.channelId,
         '대기열을 비우는 데 실패했습니다.',
       );
     }
-  };
+  }
 
-  private readonly _delete = async (event: ChatMessageEvent, args?: string) => {
-    // 대기 목록에서 지정한 순서의 곡을 삭제한다.
+  private async _delete(event: ChatMessageEvent, args?: string): Promise<void> {
     const order = parseInt(args, 10);
     try {
       const song = await this.songRequestService.getSong(
@@ -367,6 +405,7 @@ export class ChatBotService {
           event.channelId,
           '대기열에 해당 순서의 곡이 없습니다.',
         );
+        return;
       }
       if (song.requested_by != event.userId) {
         this.sendChat(
@@ -376,6 +415,7 @@ export class ChatBotService {
         );
         return;
       }
+
       await this.songRequestService.deleteRequest({
         id: song.id,
       });
@@ -385,53 +425,53 @@ export class ChatBotService {
         `${song.title} 곡을 대기열에서 삭제했습니다.`,
       );
     } catch (e) {
-      this.logger.error(`대기열 삭제 중 에러 발생: ${e}`);
+      this.logger.error(`Error deleting queue item: ${e}`);
       this.sendChat(
         event.service,
         event.channelId,
         '대기열 삭제 중 에러가 발생했습니다.',
       );
     }
-  };
+  }
 
-  private registerCommands() {
+  private registerCommands(): void {
     this.commands.push(
       {
         command: '!command',
-        func: this._help,
+        func: this._help.bind(this),
       },
       {
         command: '!wrongsong',
-        func: this._wrongSong,
+        func: this._wrongSong.bind(this),
       },
       {
         command: '!skip',
-        func: this._skip,
+        func: this._skip.bind(this),
       },
       {
         command: '!sr',
-        func: this._songRequest,
+        func: this._songRequest.bind(this),
       },
       {
         command: '!sl',
-        func: this._songList,
+        func: this._songList.bind(this),
       },
       {
         command: '!cs',
-        func: this._currentSong,
+        func: this._currentSong.bind(this),
       },
       {
         command: '!clear',
-        func: this._clear,
+        func: this._clear.bind(this),
       },
       {
         command: '!sd',
-        func: this._delete,
+        func: this._delete.bind(this),
       },
     );
   }
 
-  private registerAliases() {
+  private registerAliases(): void {
     this.aliases.push(
       {
         alias: '!명령어',

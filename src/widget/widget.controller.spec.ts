@@ -15,4 +15,12 @@ describe('WidgetController', () => {
   it('should be defined', () => {
     expect(controller).toBeDefined();
   });
+
+  describe('page', () => {
+    it('should return the channelId', () => {
+      const channelId = 'testChannel';
+      const result = controller.page(channelId);
+      expect(result).toEqual({ channelId });
+    });
+  });
 });

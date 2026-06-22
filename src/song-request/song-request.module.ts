@@ -5,6 +5,9 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { SongRequestController } from './song-request.controller';
 import { CacheModule } from '@nestjs/cache-manager';
 
+/**
+ * Module for managing song request functionality.
+ */
 @Module({
   imports: [CacheModule.register(), PrismaModule, EventEmitterModule],
   providers: [SongRequestService],

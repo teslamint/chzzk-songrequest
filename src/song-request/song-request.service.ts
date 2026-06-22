@@ -21,6 +21,11 @@ export class SongRequestService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
+  /**
+   * Retrieves a list of song requests based on the provided parameters.
+   * @param params - Parameters for filtering, pagination, and sorting.
+   * @returns A promise that resolves to an array of SongRequest objects.
+   */
   async requests(params: {
     skip?: number;
     take?: number;
@@ -38,39 +43,53 @@ export class SongRequestService {
     });
   }
 
-  async requestsByChannelId(channelId: string) {
+  /**
+   * Retrieves all song requests for a specific channel.
+   * @param channelId - The ID of the channel.
+   * @returns A promise that resolves to an array of SongRequest objects.
+   */
+  async requestsByChannelId(channelId: string): Promise<SongRequest[]> {
     return this.requests({
-      where: {
-        channel_id: channelId,
-      },
-      orderBy: {
-        id: 'asc',
-      },
+      where: { channel_id: channelId },
+      orderBy: { id: 'asc' },
     });
   }
 
-  async requestCountByChannelId(channelId: string) {
+  /**
+   * Counts the number of pending song requests for a specific channel.
+   * @param channelId - The ID of the channel.
+   * @returns A promise that resolves to the count of pending song requests.
+   */
+  async requestCountByChannelId(channelId: string): Promise<number> {
     return this.prisma.songRequest.count({
-      where: {
-        channel_id: channelId,
-        status: 'PENDING',
-      },
+      where: { channel_id: channelId, status: 'PENDING' },
     });
   }
 
-  async requestTotalDurationByChannelId(channelId: string) {
+  /**
+   * Calculates the total duration of pending song requests for a specific channel.
+   * @param channelId - The ID of the channel.
+   * @returns A promise that resolves to the sum of play times.
+   */
+  async requestTotalDurationByChannelId(
+    channelId: string,
+  ): Promise<{ _sum: { play_time: bigint } }> {
     return this.prisma.songRequest.aggregate({
-      _sum: {
-        play_time: true,
-      },
-      where: {
-        channel_id: channelId,
-        status: 'PENDING',
-      },
+      _sum: { play_time: true },
+      where: { channel_id: channelId, status: 'PENDING' },
     });
   }
 
-  async lastRequestByUser(channelId: string, requestedBy: string) {
+  /**
+   * Retrieves the last pending song request made by a specific user in a channel.
+   * @param channelId - The ID of the channel.
+   * @param requestedBy - The user ID of the requester.
+   * @returns A promise that resolves to the last pending SongRequest or null.
+   */
+  async lastRequestByUser(
+    channelId: string,
+    requestedBy: string,
+  ): Promise<SongRequest | null> {
     return this.prisma.songRequest.findFirst({
       where: {
         channel_id: channelId,
@@ -78,17 +97,20 @@ export class SongRequestService {
         status: 'PENDING',
       },
       take: 1,
-      orderBy: {
-        id: 'desc',
-      },
+      orderBy: { id: 'desc' },
     });
   }
 
+  /**
+   * Creates a new song request.
+   * @param data - The data for the new song request.
+   * @returns A promise that resolves to the created SongRequest.
+   */
   async createRequest(
     data: Prisma.SongRequestCreateInput,
   ): Promise<SongRequest> {
     data.id = ulid();
-    this.logger.debug('data', data);
+    this.logger.debug('Creating song request with data:', data);
     const request = await this.prisma.songRequest.create({ data });
     this.eventEmitter.emit(
       'songRequest.created',
@@ -97,13 +119,16 @@ export class SongRequestService {
     return request;
   }
 
+  /**
+   * Deletes a song request.
+   * @param where - The unique identifier for the song request.
+   * @returns A promise that resolves to the deleted SongRequest.
+   */
   async deleteRequest(
     where: Prisma.SongRequestWhereUniqueInput,
   ): Promise<SongRequest> {
-    const deleted = await this.prisma.songRequest.delete({
-      where,
-    });
-    if (deleted.status === 'PENDING') {
+    const deleted = await this.prisma.songRequest.delete({ where });
+    if (deleted !== null) {
       this.eventEmitter.emit(
         'songRequest.deleted',
         new SongRequestDeletedEvent(deleted),
@@ -112,36 +137,39 @@ export class SongRequestService {
     return deleted;
   }
 
-  async setPlaying(data: { id: string; channelId: string }) {
+  /**
+   * Sets the status of a song request to 'PLAYING'.
+   * @param data - The ID and channelId of the song request.
+   */
+  async setPlaying(data: { id: string; channelId: string }): Promise<void> {
     await this.prisma.songRequest.update({
-      data: {
-        status: 'PLAYING',
-      },
-      where: {
-        id: data.id,
-        channel_id: data.channelId,
-      },
+      data: { status: 'PLAYING' },
+      where: { id: data.id, channel_id: data.channelId },
     });
   }
 
-  async getCurrentSong(channelId: string) {
+  /**
+   * Retrieves the currently playing song for a specific channel.
+   * @param channelId - The ID of the channel.
+   * @returns A promise that resolves to the currently playing SongRequest or null.
+   */
+  async getCurrentSong(channelId: string): Promise<SongRequest | null> {
     return this.prisma.songRequest.findFirst({
-      where: {
-        channel_id: channelId,
-        status: 'PLAYING',
-      },
+      where: { channel_id: channelId, status: 'PLAYING' },
       take: 1,
-      orderBy: {
-        id: 'asc',
-      },
+      orderBy: { id: 'asc' },
     });
   }
 
-  async skipSong(song: SongRequest) {
-    await this.deleteRequest({
-      id: song.id,
-      channel_id: song.channel_id,
-    });
+  /**
+   * Skips the currently playing song.
+   * @param song - The SongRequest to skip.
+   */
+  async skipSong(song: SongRequest): Promise<void> {
+    if (song == null) {
+      return;
+    }
+    await this.deleteRequest({ id: song.id, channel_id: song.channel_id });
     this.eventEmitter.emit(
       'songRequest.skipped',
       new SongRequestSkippedEvent(song),
@@ -149,49 +177,47 @@ export class SongRequestService {
   }
 
   /**
-   * 재생중 상태인 곡(들)을 대기중으로 되돌린다.
-   * @param data
+   * Reverts all 'PLAYING' song requests to 'PENDING' for a given channel.
+   * @param data - The channelId.
    */
-  async revertToPending(data: { channelId: string }) {
+  async revertToPending(data: { channelId: string }): Promise<void> {
+    if (data === null) {
+      return;
+    }
     await this.prisma.songRequest.updateMany({
-      data: {
-        status: 'PENDING',
-      },
-      where: {
-        channel_id: data.channelId,
-        status: 'PLAYING',
-      },
-    });
-  }
-
-  async clearQueue(channelId: string) {
-    await this.prisma.songRequest.deleteMany({
-      where: {
-        channel_id: channelId,
-        status: 'PENDING',
-      },
+      data: { status: 'PENDING' },
+      where: { channel_id: data.channelId, status: 'PLAYING' },
     });
   }
 
   /**
-   * 대기열에서 특정 순서의 곡을 가져온다.
-   * @param channelId
-   * @param order
+   * Clears all pending song requests for a given channel.
+   * @param channelId - The ID of the channel.
    */
-  async getSong(channelId: string, order?: number) {
+  async clearQueue(channelId: string): Promise<void> {
+    await this.prisma.songRequest.deleteMany({
+      where: { channel_id: channelId, status: 'PENDING' },
+    });
+  }
+
+  /**
+   * Retrieves a song request from the queue based on its order.
+   * @param channelId - The ID of the channel.
+   * @param order - The order of the song in the queue.
+   * @returns A promise that resolves to the SongRequest at the specified order or null.
+   */
+  async getSong(
+    channelId: string,
+    order?: number,
+  ): Promise<SongRequest | null> {
     if (!order) {
       return null;
     }
     return this.prisma.songRequest.findFirst({
-      where: {
-        channel_id: channelId,
-        status: 'PENDING',
-      },
+      where: { channel_id: channelId, status: 'PENDING' },
       take: 1,
       skip: order - 1,
-      orderBy: {
-        id: 'asc',
-      },
+      orderBy: { id: 'asc' },
     });
   }
 }
