@@ -197,7 +197,7 @@ describe('SongRequestService', () => {
       );
     });
 
-    it('should call prisma.songRequest.delete and emit songRequest.deleted if status is not pending', async () => {
+    it('should call prisma.songRequest.delete and NOT emit songRequest.deleted if status is not pending', async () => {
       const where: Prisma.SongRequestWhereUniqueInput = {
         id: 'testId',
         channel_id: 'test',
@@ -214,11 +214,6 @@ describe('SongRequestService', () => {
         play_time: BigInt(1),
         status: 'PLAYING',
       };
-      const mockCurrentSong: SongRequest = {
-        ...mockDeletedResult,
-        status: 'PLAYING',
-      };
-      jest.spyOn(service, 'getCurrentSong').mockResolvedValue(mockCurrentSong);
       jest
         .spyOn(prisma.songRequest, 'delete')
         .mockResolvedValue(mockDeletedResult);
@@ -226,7 +221,7 @@ describe('SongRequestService', () => {
 
       await service.deleteRequest(where);
       expect(prisma.songRequest.delete).toHaveBeenCalledWith({ where });
-      expect(eventEmitter.emit).toHaveBeenCalled();
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
   });
 
@@ -310,13 +305,15 @@ describe('SongRequestService', () => {
         request_from: 'CHAT',
         requested_at: new Date(),
       };
-      mockSong.title = 'test';
-      jest.spyOn(service, 'deleteRequest');
+      jest.spyOn(service, 'deleteRequest').mockResolvedValue(mockSong);
       jest.spyOn(eventEmitter, 'emit');
 
       await service.skipSong(mockSong);
       expect(service.deleteRequest).toHaveBeenCalled();
-      expect(eventEmitter.emit).toHaveBeenCalled();
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        'songRequest.skipped',
+        expect.any(SongRequestSkippedEvent),
+      );
     });
 
     it('should do nothing if song is not provided', async () => {

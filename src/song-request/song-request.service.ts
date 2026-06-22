@@ -128,7 +128,7 @@ export class SongRequestService {
     where: Prisma.SongRequestWhereUniqueInput,
   ): Promise<SongRequest> {
     const deleted = await this.prisma.songRequest.delete({ where });
-    if (deleted !== null) {
+    if (deleted.status === 'PENDING') {
       this.eventEmitter.emit(
         'songRequest.deleted',
         new SongRequestDeletedEvent(deleted),
