@@ -2,10 +2,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ChatBotService } from './chat-bot.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SongRequestService } from '../song-request/song-request.service';
-import * as ytdl from 'ytdl-core';
+import * as ytdl from '@distube/ytdl-core';
 import { ChatMessageEvent, SendChatMessageEvent } from './chat-bot.events';
 
-jest.mock('ytdl-core');
+jest.mock('@distube/ytdl-core');
+jest.mock('../song-request/song-request.service', () => ({
+  SongRequestService: class SongRequestService {},
+}));
 
 describe('ChatBotService', () => {
   let service: ChatBotService;
@@ -263,6 +266,41 @@ describe('ChatBotService', () => {
       const sendEvent = (eventEmitter.emit as jest.Mock).mock.calls.pop()[1];
       expect(sendEvent.message).toContain('재생할 수 없는 동영상입니다.');
     });
+
+    it('should send a message if youtube info cannot be loaded', async () => {
+      const loggerErrorSpy = jest
+        .spyOn(service['logger'], 'error')
+        .mockImplementation();
+      mockYtdl.getInfo.mockRejectedValue(
+        new Error('Could not extract functions'),
+      );
+      const event = new ChatMessageEvent({
+        service: 'CHZZK',
+        channelId: 'testChannel',
+        message: '!sr https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        timestamp: 1234567,
+        userId: 'user1',
+        role: 'user',
+        nickname: 'User1',
+      });
+
+      await service['_songRequest'](
+        event,
+        'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      );
+
+      expect(songRequestService.createRequest).not.toHaveBeenCalled();
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        'chat.send',
+        expect.any(SendChatMessageEvent),
+      );
+      const sendEvent = (eventEmitter.emit as jest.Mock).mock.calls.pop()[1];
+      expect(sendEvent.message).toContain(
+        '동영상 정보를 불러오는 데 실패했습니다.',
+      );
+      expect(loggerErrorSpy).toHaveBeenCalledWith(expect.any(Error));
+    });
+
     it('should send a message if the song already exists', async () => {
       mockYtdl.getInfo.mockResolvedValue({
         videoDetails: {

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as ytdl from 'ytdl-core';
+import * as ytdl from '@distube/ytdl-core';
 import { SongRequestService } from '../song-request/song-request.service';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { ChatMessageEvent, SendChatMessageEvent } from './chat-bot.events';
@@ -107,7 +107,18 @@ export class ChatBotService {
       );
       return null;
     }
-    const info = await ytdl.getInfo(ytdl.getURLVideoID(url));
+    let info: ytdl.videoInfo;
+    try {
+      info = await ytdl.getInfo(ytdl.getURLVideoID(url));
+    } catch (e) {
+      this.logger.error(e);
+      this.sendChat(
+        event.service,
+        event.channelId,
+        `${mention}동영상 정보를 불러오는 데 실패했습니다. 잠시 후 다시 시도해주세요.`,
+      );
+      return null;
+    }
     // normalize url
     const normalizedUrl =
       'https://www.youtube.com/watch?v=' + ytdl.getVideoID(url);
