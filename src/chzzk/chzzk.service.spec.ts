@@ -9,7 +9,10 @@ import {
 } from '../chat-bot/chat-bot.events';
 import { BuzzkChat } from './chzzk.interface';
 
-jest.mock('buzzk');
+jest.mock('buzzk', () => ({
+  chat: jest.fn(),
+  login: jest.fn(),
+}));
 
 describe('ChzzkService', () => {
   let service: ChzzkService;
