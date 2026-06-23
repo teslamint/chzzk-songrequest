@@ -15,6 +15,7 @@ describe('AuthController', () => {
           useValue: {
             generateAuthUrl: jest.fn(),
             handleCallback: jest.fn(),
+            toggleBotAccount: jest.fn(),
           },
         },
       ],
@@ -66,6 +67,17 @@ describe('AuthController', () => {
       const result = await controller.callback('bad-code', 'state');
 
       expect(result).toEqual({ error: 'Token exchange failed' });
+    });
+  });
+
+  describe('PATCH /auth/chzzk/bot/:channelId', () => {
+    it('should toggle bot account', async () => {
+      (authService.toggleBotAccount as jest.Mock).mockResolvedValue(undefined);
+
+      const result = await controller.toggleBot('ch-1', { useBotAccount: true });
+
+      expect(authService.toggleBotAccount).toHaveBeenCalledWith('ch-1', true);
+      expect(result).toEqual({ success: true });
     });
   });
 });

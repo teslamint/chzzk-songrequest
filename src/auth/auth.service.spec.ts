@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as Buzzk from 'buzzk';
 
 jest.mock('buzzk', () => ({
@@ -18,6 +19,7 @@ describe('AuthService', () => {
   let service: AuthService;
   let prisma: PrismaService;
   let cacheManager: any;
+  let eventEmitter: EventEmitter2;
 
   beforeEach(async () => {
     cacheManager = {
@@ -53,11 +55,16 @@ describe('AuthService', () => {
           provide: CACHE_MANAGER,
           useValue: cacheManager,
         },
+        {
+          provide: EventEmitter2,
+          useValue: { emit: jest.fn() },
+        },
       ],
     }).compile();
 
     service = module.get<AuthService>(AuthService);
     prisma = module.get<PrismaService>(PrismaService);
+    eventEmitter = module.get<EventEmitter2>(EventEmitter2);
     jest.clearAllMocks();
   });
 
@@ -163,6 +170,41 @@ describe('AuthService', () => {
       (prisma.chzzkToken.findUnique as jest.Mock).mockResolvedValue(null);
       const result = await service.getValidAccessToken('ch-1');
       expect(result).toBeNull();
+    });
+  });
+
+  describe('toggleBotAccount', () => {
+    it('should update useBotAccount flag', async () => {
+      (prisma.channel.update as jest.Mock).mockResolvedValue({});
+
+      await service.toggleBotAccount('ch-1', true);
+
+      expect(prisma.channel.update).toHaveBeenCalledWith({
+        where: { channelId: 'ch-1' },
+        data: { useBotAccount: true },
+      });
+    });
+
+    it('should emit botAccount.changed event after update', async () => {
+      (prisma.channel.update as jest.Mock).mockResolvedValue({});
+
+      await service.toggleBotAccount('ch-1', true);
+
+      expect(eventEmitter.emit).toHaveBeenCalledWith('botAccount.changed', {
+        channelId: 'ch-1',
+        useBotAccount: true,
+      });
+    });
+
+    it('should emit botAccount.changed with useBotAccount=false when disabling', async () => {
+      (prisma.channel.update as jest.Mock).mockResolvedValue({});
+
+      await service.toggleBotAccount('ch-1', false);
+
+      expect(eventEmitter.emit).toHaveBeenCalledWith('botAccount.changed', {
+        channelId: 'ch-1',
+        useBotAccount: false,
+      });
     });
   });
 });

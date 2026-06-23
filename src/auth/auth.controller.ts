@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Res, Render } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Param, Query, Res, Render } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 @Controller('auth')
@@ -23,5 +23,14 @@ export class AuthController {
     } catch (e) {
       return { error: e.message };
     }
+  }
+
+  @Patch('chzzk/bot/:channelId')
+  async toggleBot(
+    @Param('channelId') channelId: string,
+    @Body() body: { useBotAccount: boolean },
+  ): Promise<{ success: boolean }> {
+    await this.authService.toggleBotAccount(channelId, body.useBotAccount);
+    return { success: true };
   }
 }

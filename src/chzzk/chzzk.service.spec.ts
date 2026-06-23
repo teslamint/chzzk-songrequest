@@ -6,6 +6,8 @@ import * as Buzzk from 'buzzk';
 import { SendChatMessageEvent } from '../chat-bot/chat-bot.events';
 import { BuzzkChat } from './chzzk.interface';
 import { AuthService } from '../auth/auth.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { UnofficialChatClient } from './unofficial-chat-client';
 
 jest.mock('buzzk', () => ({
   chat: jest.fn(),
@@ -13,7 +15,10 @@ jest.mock('buzzk', () => ({
   login: jest.fn(),
 }));
 
+jest.mock('./unofficial-chat-client');
+
 describe('ChzzkService', () => {
+  let module: TestingModule;
   let service: ChzzkService;
   let eventEmitter: EventEmitter2;
   let authService: AuthService;
@@ -29,7 +34,7 @@ describe('ChzzkService', () => {
     };
     (Buzzk.chat as jest.Mock).mockImplementation(() => mockChatClient);
 
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         ChzzkService,
         {
@@ -39,6 +44,8 @@ describe('ChzzkService', () => {
               const map: Record<string, string> = {
                 'chzzk.client_id': 'test-id',
                 'chzzk.client_secret': 'test-secret',
+                'chzzk.bot_nid_aut': 'bot-nid-aut',
+                'chzzk.bot_nid_ses': 'bot-nid-ses',
               };
               return map[key];
             }),
@@ -52,6 +59,12 @@ describe('ChzzkService', () => {
           provide: AuthService,
           useValue: {
             getValidAccessToken: jest.fn().mockResolvedValue('test-access-token'),
+          },
+        },
+        {
+          provide: PrismaService,
+          useValue: {
+            channel: { findUnique: jest.fn() },
           },
         },
       ],
@@ -172,6 +185,11 @@ describe('ChzzkService', () => {
 
   describe('handleChatSend', () => {
     it('should send message via chat client', async () => {
+      const prisma = module.get<PrismaService>(PrismaService);
+      (prisma.channel.findUnique as jest.Mock).mockResolvedValue({
+        channelId: 'ch-1',
+        useBotAccount: false,
+      });
       await service.getChatClient('ch-1');
       await service['handleChatSend'](
         new SendChatMessageEvent({ service: 'CHZZK', channelId: 'ch-1', message: 'hello' }),
@@ -184,6 +202,149 @@ describe('ChzzkService', () => {
         new SendChatMessageEvent({ service: 'TWITCH', channelId: 'ch-1', message: 'hello' }),
       );
       expect(mockChatClient.send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('handleChatSend with bot account', () => {
+    let prisma: PrismaService;
+    let mockUnofficialClient: jest.Mocked<UnofficialChatClient>;
+
+    beforeEach(() => {
+      prisma = module.get<PrismaService>(PrismaService);
+      mockUnofficialClient = {
+        connect: jest.fn().mockResolvedValue(true),
+        send: jest.fn().mockResolvedValue(true),
+        disconnect: jest.fn(),
+        onDisconnect: jest.fn(),
+        connected: true,
+      } as any;
+      (UnofficialChatClient as jest.Mock).mockImplementation(() => mockUnofficialClient);
+    });
+
+    it('should use unofficial client when useBotAccount is true', async () => {
+      (prisma.channel.findUnique as jest.Mock).mockResolvedValue({
+        channelId: 'ch-1',
+        useBotAccount: true,
+      });
+
+      await service.getChatClient('ch-1');
+      await service['handleChatSend'](
+        new SendChatMessageEvent({ service: 'CHZZK', channelId: 'ch-1', message: '봇 응답' }),
+      );
+
+      expect(mockUnofficialClient.send).toHaveBeenCalledWith('봇 응답');
+    });
+
+    it('should fall back to official client when bot config missing', async () => {
+      (prisma.channel.findUnique as jest.Mock).mockResolvedValue({
+        channelId: 'ch-1',
+        useBotAccount: false,
+      });
+
+      await service.getChatClient('ch-1');
+      await service['handleChatSend'](
+        new SendChatMessageEvent({ service: 'CHZZK', channelId: 'ch-1', message: 'hello' }),
+      );
+
+      expect(mockChatClient.send).toHaveBeenCalledWith('hello');
+      expect(mockUnofficialClient.send).not.toHaveBeenCalled();
+    });
+
+    it('should fall back to official when unofficial connect fails', async () => {
+      (prisma.channel.findUnique as jest.Mock).mockResolvedValue({
+        channelId: 'ch-1',
+        useBotAccount: true,
+      });
+      mockUnofficialClient.connect.mockResolvedValue(false);
+
+      await service.getChatClient('ch-1');
+      await service['handleChatSend'](
+        new SendChatMessageEvent({ service: 'CHZZK', channelId: 'ch-1', message: 'hello' }),
+      );
+
+      expect(mockChatClient.send).toHaveBeenCalledWith('hello');
+    });
+  });
+
+  describe('handleChatDisconnect cleans up unofficial client', () => {
+    let prisma: PrismaService;
+    let mockUnofficialClient: jest.Mocked<UnofficialChatClient>;
+
+    beforeEach(() => {
+      prisma = module.get<PrismaService>(PrismaService);
+      mockUnofficialClient = {
+        connect: jest.fn().mockResolvedValue(true),
+        send: jest.fn().mockResolvedValue(true),
+        disconnect: jest.fn(),
+        onDisconnect: jest.fn(),
+        connected: true,
+      } as any;
+      (UnofficialChatClient as jest.Mock).mockImplementation(() => mockUnofficialClient);
+    });
+
+    it('should disconnect unofficial client on widget.close', async () => {
+      (prisma.channel.findUnique as jest.Mock).mockResolvedValue({
+        channelId: 'ch-1',
+        useBotAccount: true,
+      });
+
+      await service.getChatClient('ch-1');
+      await service.getUnofficialChatClient('ch-1');
+      await service['handleChatDisconnect']({ channelId: 'ch-1' });
+
+      expect(mockUnofficialClient.disconnect).toHaveBeenCalled();
+    });
+  });
+
+  describe('handleBotAccountChanged', () => {
+    let prisma: PrismaService;
+    let mockUnofficialClient: jest.Mocked<UnofficialChatClient>;
+
+    beforeEach(() => {
+      prisma = module.get<PrismaService>(PrismaService);
+      mockUnofficialClient = {
+        connect: jest.fn().mockResolvedValue(true),
+        send: jest.fn().mockResolvedValue(true),
+        disconnect: jest.fn(),
+        onDisconnect: jest.fn(),
+        connected: true,
+      } as any;
+      (UnofficialChatClient as jest.Mock).mockImplementation(() => mockUnofficialClient);
+    });
+
+    it('should remove channelId from noBotAccount when bot is enabled', async () => {
+      (prisma.channel.findUnique as jest.Mock).mockResolvedValue(null);
+      // Prime the noBotAccount cache
+      await service.getUnofficialChatClient('ch-1');
+      expect(service['noBotAccount'].has('ch-1')).toBe(true);
+
+      service['handleBotAccountChanged']({ channelId: 'ch-1', useBotAccount: true });
+
+      expect(service['noBotAccount'].has('ch-1')).toBe(false);
+    });
+
+    it('should disconnect existing unofficial client when bot is disabled', async () => {
+      (prisma.channel.findUnique as jest.Mock).mockResolvedValue({
+        channelId: 'ch-1',
+        useBotAccount: true,
+      });
+
+      await service.getUnofficialChatClient('ch-1');
+      expect(service['unofficialClients']['ch-1']).toBeDefined();
+
+      service['handleBotAccountChanged']({ channelId: 'ch-1', useBotAccount: false });
+
+      expect(mockUnofficialClient.disconnect).toHaveBeenCalled();
+      expect(service['unofficialClients']['ch-1']).toBeUndefined();
+    });
+
+    it('should only clear cache when bot is enabled (no disconnect)', async () => {
+      (prisma.channel.findUnique as jest.Mock).mockResolvedValue(null);
+      await service.getUnofficialChatClient('ch-1');
+
+      service['handleBotAccountChanged']({ channelId: 'ch-1', useBotAccount: true });
+
+      expect(mockUnofficialClient.disconnect).not.toHaveBeenCalled();
     });
   });
 });

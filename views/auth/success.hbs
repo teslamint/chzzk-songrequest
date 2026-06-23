@@ -10,6 +10,24 @@
   <h1>인증 완료</h1>
   <p>채널: {{ channelName }} ({{ channelId }})</p>
   <p>위젯 URL: <a href="/widget/{{ channelId }}">/widget/{{ channelId }}</a></p>
+  <hr>
+  <h3>봇 계정 설정</h3>
+  <p>봇 계정을 사용하면 채팅 응답이 봇 이름으로 표시됩니다.</p>
+  <button onclick="toggleBot(true)">봇 계정 사용</button>
+  <button onclick="toggleBot(false)">봇 계정 해제</button>
+  <p id="bot-status"></p>
+  <script>
+    async function toggleBot(use) {
+      const res = await fetch('/auth/chzzk/bot/{{ channelId }}', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ useBotAccount: use }),
+      });
+      const data = await res.json();
+      document.getElementById('bot-status').textContent =
+        data.success ? (use ? '봇 계정 활성화됨' : '봇 계정 비활성화됨') : '설정 실패';
+    }
+  </script>
 {{/if}}
 </body>
 </html>
