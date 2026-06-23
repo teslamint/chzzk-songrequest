@@ -18,6 +18,9 @@ import { PrismaService } from '../prisma/prisma.service';
 @Injectable()
 export class ChzzkService implements OnModuleInit {
   private static readonly CONNECT_FAILURE_COOLDOWN_MS = 60_000;
+  private static readonly RECONNECT_MAX_RETRIES = 5;
+  private static readonly RECONNECT_BASE_DELAY_MS = 1_000;
+  private static readonly RECONNECT_MAX_DELAY_MS = 30_000;
 
   private readonly chatClients: ChatClientContainer = {};
   private readonly unofficialClients: UnofficialChatClientContainer = {};
@@ -27,6 +30,9 @@ export class ChzzkService implements OnModuleInit {
   > = {};
   private readonly connectFailedUntil: Record<string, number> = {};
   private readonly noBotAccount = new Set<string>();
+  private readonly activeChannels = new Set<string>();
+  private readonly reconnectTimers: Record<string, ReturnType<typeof setTimeout>> = {};
+  private readonly reconnectAttempts: Record<string, number> = {};
   private readonly logger = new Logger(ChzzkService.name);
 
   constructor(
@@ -140,6 +146,9 @@ export class ChzzkService implements OnModuleInit {
     client.onDisconnect(() => {
       this.logger.debug(`Unofficial client disconnected from ${channelId}`);
       delete this.unofficialClients[channelId];
+      if (this.activeChannels.has(channelId)) {
+        this.scheduleReconnect(channelId, 'unofficial');
+      }
     });
 
     const connected = await client.connect(channelId);
@@ -173,6 +182,10 @@ export class ChzzkService implements OnModuleInit {
     this.logger.debug(`Closed to ${channelId}`);
     this.eventEmitter.emit('chat.disconnect', { service: 'CHZZK', channelId });
     delete this.chatClients[channelId];
+
+    if (this.activeChannels.has(channelId)) {
+      this.scheduleReconnect(channelId, 'official');
+    }
   }
 
   private handleIncomingChatMessage(
@@ -200,12 +213,15 @@ export class ChzzkService implements OnModuleInit {
   @OnEvent('widget.open')
   private async handleChatConnect(args: { channelId: string }): Promise<void> {
     this.logger.debug('widget open event:', { ...args });
+    this.activeChannels.add(args.channelId);
     await this.getChatClient(args.channelId);
   }
 
   @OnEvent('widget.close')
   private async handleChatDisconnect(args: { channelId: string }): Promise<void> {
     this.logger.debug('widget close event:', { ...args });
+    this.activeChannels.delete(args.channelId);
+    this.cancelReconnect(args.channelId);
 
     const chatClient = this.chatClients[args.channelId];
     if (chatClient) {
@@ -249,6 +265,72 @@ export class ChzzkService implements OnModuleInit {
         unofficialClient.disconnect();
         delete this.unofficialClients[args.channelId];
       }
+    }
+  }
+
+  private scheduleReconnect(channelId: string, type: 'official' | 'unofficial'): void {
+    const key = `${type}:${channelId}`;
+    const attempt = (this.reconnectAttempts[key] ?? 0) + 1;
+
+    if (attempt > ChzzkService.RECONNECT_MAX_RETRIES) {
+      this.logger.warn(`Max reconnect attempts reached for ${key}`);
+      delete this.reconnectAttempts[key];
+      if (this.reconnectTimers[key]) {
+        clearTimeout(this.reconnectTimers[key]);
+        delete this.reconnectTimers[key];
+      }
+      return;
+    }
+
+    this.reconnectAttempts[key] = attempt;
+    const delay = Math.min(
+      ChzzkService.RECONNECT_BASE_DELAY_MS * Math.pow(2, attempt - 1),
+      ChzzkService.RECONNECT_MAX_DELAY_MS,
+    );
+
+    this.logger.debug(`Scheduling ${type} reconnect for ${channelId} in ${delay}ms (attempt ${attempt}/${ChzzkService.RECONNECT_MAX_RETRIES})`);
+
+    this.reconnectTimers[key] = setTimeout(async () => {
+      delete this.reconnectTimers[key];
+
+      if (!this.activeChannels.has(channelId)) {
+        delete this.reconnectAttempts[key];
+        return;
+      }
+
+      try {
+        if (type === 'official') {
+          const client = await this.getChatClient(channelId);
+          if (client) {
+            this.logger.log(`Reconnected official client for ${channelId}`);
+            delete this.reconnectAttempts[key];
+          } else {
+            this.scheduleReconnect(channelId, type);
+          }
+        } else {
+          const client = await this.getUnofficialChatClient(channelId);
+          if (client) {
+            this.logger.log(`Reconnected unofficial client for ${channelId}`);
+            delete this.reconnectAttempts[key];
+          } else {
+            this.scheduleReconnect(channelId, type);
+          }
+        }
+      } catch (err) {
+        this.logger.error(`Reconnect failed for ${key}`, err);
+        this.scheduleReconnect(channelId, type);
+      }
+    }, delay);
+  }
+
+  private cancelReconnect(channelId: string): void {
+    for (const type of ['official', 'unofficial'] as const) {
+      const key = `${type}:${channelId}`;
+      if (this.reconnectTimers[key]) {
+        clearTimeout(this.reconnectTimers[key]);
+        delete this.reconnectTimers[key];
+      }
+      delete this.reconnectAttempts[key];
     }
   }
 }

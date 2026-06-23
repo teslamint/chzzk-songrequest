@@ -383,6 +383,79 @@ describe('ChzzkService', () => {
     });
   });
 
+  describe('reconnect on unexpected disconnect', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should schedule reconnect for official client when widget is active', async () => {
+      await service['handleChatConnect']({ channelId: 'ch-1' });
+      expect(service['activeChannels'].has('ch-1')).toBe(true);
+
+      const spy = jest.spyOn(service, 'getChatClient');
+      spy.mockClear();
+
+      service['handleChatClientDisconnect']('ch-1');
+
+      expect(service['reconnectTimers']['official:ch-1']).toBeDefined();
+
+      jest.advanceTimersByTime(1000);
+      await Promise.resolve();
+
+      expect(spy).toHaveBeenCalledWith('ch-1');
+    });
+
+    it('should NOT schedule reconnect when widget is closed', async () => {
+      await service.getChatClient('ch-1');
+
+      service['handleChatClientDisconnect']('ch-1');
+
+      expect(service['reconnectTimers']['official:ch-1']).toBeUndefined();
+    });
+
+    it('should cancel reconnect on widget.close', async () => {
+      await service['handleChatConnect']({ channelId: 'ch-1' });
+      service['handleChatClientDisconnect']('ch-1');
+      expect(service['reconnectTimers']['official:ch-1']).toBeDefined();
+
+      await service['handleChatDisconnect']({ channelId: 'ch-1' });
+
+      expect(service['reconnectTimers']['official:ch-1']).toBeUndefined();
+      expect(service['reconnectAttempts']['official:ch-1']).toBeUndefined();
+    });
+
+    it('should use exponential backoff delays', async () => {
+      await service['handleChatConnect']({ channelId: 'ch-1' });
+
+      service['scheduleReconnect']('ch-1', 'official');
+      expect(service['reconnectAttempts']['official:ch-1']).toBe(1);
+
+      service['scheduleReconnect']('ch-1', 'official');
+      expect(service['reconnectAttempts']['official:ch-1']).toBe(2);
+
+      service['scheduleReconnect']('ch-1', 'official');
+      expect(service['reconnectAttempts']['official:ch-1']).toBe(3);
+    });
+
+    it('should stop after max retries and clear timer', async () => {
+      await service['handleChatConnect']({ channelId: 'ch-1' });
+
+      for (let i = 0; i < 5; i++) {
+        service['scheduleReconnect']('ch-1', 'official');
+      }
+      expect(service['reconnectAttempts']['official:ch-1']).toBe(5);
+      expect(service['reconnectTimers']['official:ch-1']).toBeDefined();
+
+      service['scheduleReconnect']('ch-1', 'official');
+      expect(service['reconnectTimers']['official:ch-1']).toBeUndefined();
+      expect(service['reconnectAttempts']['official:ch-1']).toBeUndefined();
+    });
+  });
+
   describe('handleBotAccountChanged', () => {
     let prisma: PrismaService;
     let mockUnofficialClient: jest.Mocked<UnofficialChatClient>;
