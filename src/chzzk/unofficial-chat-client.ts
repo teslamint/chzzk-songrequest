@@ -21,6 +21,7 @@ export class UnofficialChatClient {
   private userIdHash: string | null = null;
   private pingTimer: ReturnType<typeof setInterval> | null = null;
   private disconnectCallback: (() => void) | null = null;
+  private intentionalClose = false;
 
   constructor(
     private readonly nidAut: string,
@@ -62,6 +63,7 @@ export class UnofficialChatClient {
       return new Promise<boolean>((resolve) => {
         const timeout = setTimeout(() => {
           this.logger.error('WebSocket connect timeout');
+          this.intentionalClose = true;
           this.cleanup();
           resolve(false);
         }, CONNECT_TIMEOUT_MS);
@@ -102,8 +104,12 @@ export class UnofficialChatClient {
 
         this.ws.onclose = () => {
           clearTimeout(timeout);
+          const wasIntentional = this.intentionalClose;
+          this.intentionalClose = false;
           this.cleanup();
-          this.disconnectCallback?.();
+          if (!wasIntentional) {
+            this.disconnectCallback?.();
+          }
         };
 
         this.ws.onerror = (err) => {
@@ -149,6 +155,7 @@ export class UnofficialChatClient {
   }
 
   disconnect(): void {
+    this.intentionalClose = true;
     this.ws?.close();
     this.cleanup();
   }

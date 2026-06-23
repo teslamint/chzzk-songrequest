@@ -164,4 +164,97 @@ describe('UnofficialChatClient', () => {
       expect(client.connected).toBe(false);
     });
   });
+
+  describe('onDisconnect callback', () => {
+    async function connectClient(): Promise<void> {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ content: { chatChannelId: 'chat-ch', status: 'OPEN' } }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ content: { userIdHash: 'uid' } }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ content: { accessToken: 'tkn', extraToken: 'e' } }),
+        });
+
+      const p = client.connect('ch-1');
+      await new Promise((r) => setTimeout(r, 10));
+      mockWs.simulateOpen();
+      await new Promise((r) => setTimeout(r, 10));
+      mockWs.simulateMessage({ cmd: 10100, bdy: { sid: 's' } });
+      await p;
+    }
+
+    it('should fire callback on server-initiated disconnect', async () => {
+      await connectClient();
+
+      const callback = jest.fn();
+      client.onDisconnect(callback);
+
+      mockWs.simulateClose();
+
+      expect(callback).toHaveBeenCalledTimes(1);
+    });
+
+    it('should NOT fire callback on intentional disconnect()', async () => {
+      await connectClient();
+
+      const callback = jest.fn();
+      client.onDisconnect(callback);
+
+      const localWs = mockWs;
+      client.disconnect();
+      localWs.simulateClose();
+
+      expect(callback).not.toHaveBeenCalled();
+    });
+
+    it('should NOT fire callback when onclose fires after timeout cleanup', async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ content: { chatChannelId: 'chat-ch', status: 'OPEN' } }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ content: { userIdHash: 'uid' } }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ content: { accessToken: 'tkn', extraToken: 'e' } }),
+        });
+
+      const callback = jest.fn();
+      client.onDisconnect(callback);
+
+      jest.useFakeTimers();
+      try {
+        const connectPromise = client.connect('ch-1');
+
+        // Allow all microtasks (fetch mocks) to settle
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+
+        mockWs.simulateOpen();
+
+        // Advance past the 10s connect timeout
+        await jest.advanceTimersByTimeAsync(10_000);
+
+        const result = await connectPromise;
+        expect(result).toBe(false);
+
+        // Simulate onclose firing after the timeout already cleaned up
+        mockWs.simulateClose();
+        expect(callback).not.toHaveBeenCalled();
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+  });
 });
