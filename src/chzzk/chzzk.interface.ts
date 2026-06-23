@@ -18,21 +18,6 @@ export class BuzzkChannel {
   imageURL: string;
 }
 
-export class BuzzkUser {
-  channelID: string;
-  name: string;
-  imageURL: string;
-  role: ChzzkUserRole;
-  followDate: string | null;
-}
-
-export type ChzzkUserRole =
-  | 'streamer'
-  | 'manager'
-  | 'streaming_channel_manager'
-  | 'streaming_chat_manager'
-  | 'common_user';
-
 export interface ChatClientContainer {
   [key: string]: chat;
 }

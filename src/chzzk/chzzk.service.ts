@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import * as Buzzk from 'buzzk';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
@@ -6,56 +6,41 @@ import {
   ChatMessageEvent,
   SendChatMessageEvent,
 } from '../chat-bot/chat-bot.events';
-import {
-  BuzzkChat,
-  BuzzkUser,
-  ChatClientContainer,
-  ChzzkUserRole,
-} from './chzzk.interface';
+import { BuzzkChat, ChatClientContainer } from './chzzk.interface';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable()
-export class ChzzkService {
+export class ChzzkService implements OnModuleInit {
   private readonly chatClients: ChatClientContainer = {};
   private readonly logger = new Logger(ChzzkService.name);
 
   constructor(
     private readonly configService: ConfigService,
     private readonly eventEmitter: EventEmitter2,
-  ) {
-    this.initializeBuzzkLogin();
-  }
+    private readonly authService: AuthService,
+  ) {}
 
-  /**
-   * Retrieves the chat client for a given channel ID.
-   * If a client doesn't exist, it initializes, connects, and stores it.
-   * @param channelId - The ID of the channel.
-   * @returns The chat client for the channel.
-   */
-  public getChatClient(channelId: string): Buzzk.chat {
-    if (!this.chatClients[channelId]) {
-      this.chatClients[channelId] = this.createAndConnectChatClient(channelId);
-    }
-    return this.chatClients[channelId];
-  }
-
-  /**
-   * Initializes the Buzzk login with credentials from the config.
-   */
-  private initializeBuzzkLogin(): void {
-    Buzzk.login(
-      this.configService.get('NID_AUT'),
-      this.configService.get('NID_SES'),
+  onModuleInit(): void {
+    Buzzk.auth(
+      this.configService.get<string>('chzzk.client_id'),
+      this.configService.get<string>('chzzk.client_secret'),
     );
   }
 
-  /**
-   * Creates a new chat client, connects it, and handles events.
-   * @param channelId - The ID of the channel.
-   * @returns The initialized chat client.
-   */
-  private createAndConnectChatClient(channelId: string): Buzzk.chat {
-    const chatClient = new Buzzk.chat(channelId);
+  public async getChatClient(channelId: string): Promise<Buzzk.chat | null> {
+    if (this.chatClients[channelId]) {
+      return this.chatClients[channelId];
+    }
+
+    const accessToken = await this.authService.getValidAccessToken(channelId);
+    if (!accessToken) {
+      this.logger.warn(`No valid token for channel ${channelId}`);
+      return null;
+    }
+
+    const chatClient = new Buzzk.chat(accessToken);
     this.setupChatClientEventListeners(chatClient, channelId);
+
     chatClient
       .connect()
       .then((result) => {
@@ -66,69 +51,40 @@ export class ChzzkService {
         }
       })
       .catch((err) => {
-        this.logger.error(
-          `Failed to make initial connect to ${channelId}`,
-          err,
-        );
+        this.logger.error(`Failed to make initial connect to ${channelId}`, err);
       });
+
+    this.chatClients[channelId] = chatClient;
     return chatClient;
   }
 
-  /**
-   * Sets up event listeners for connect, disconnect, and messages on the chat client.
-   * @param chatClient - The chat client instance.
-   * @param channelId - The ID of the channel.
-   */
   private setupChatClientEventListeners(
     chatClient: Buzzk.chat,
     channelId: string,
   ): void {
     chatClient.onDisconnect(() => this.handleChatClientDisconnect(channelId));
     chatClient.onMessage((data: BuzzkChat) =>
-      this.handleIncomingChatMessage(data, chatClient, channelId),
+      this.handleIncomingChatMessage(data, channelId),
     );
   }
 
-  /**
-   * Handles the chat client connection event.
-   * @param channelId - The ID of the channel.
-   */
   private handleChatClientConnect(channelId: string): void {
     this.logger.debug(`Connected to ${channelId}`);
-    this.eventEmitter.emit('chat.connect', {
-      service: 'CHZZK',
-      channelId,
-    });
+    this.eventEmitter.emit('chat.connect', { service: 'CHZZK', channelId });
   }
 
-  /**
-   * Handles the chat client disconnection event.
-   * @param channelId - The ID of the channel.
-   */
   private handleChatClientDisconnect(channelId: string): void {
     this.logger.debug(`Closed to ${channelId}`);
-    this.eventEmitter.emit('chat.disconnect', {
-      service: 'CHZZK',
-      channelId,
-    });
+    this.eventEmitter.emit('chat.disconnect', { service: 'CHZZK', channelId });
   }
 
-  /**
-   * Handles incoming chat messages.
-   * @param data - The incoming chat message data.
-   * @param chatClient - The chat client instance.
-   * @param channelId - The ID of the channel.
-   */
-  private async handleIncomingChatMessage(
+  private handleIncomingChatMessage(
     chat: BuzzkChat,
-    chatClient: Buzzk.chat,
     channelId: string,
-  ): Promise<void> {
-    this.logger.debug(`chat time: ${chat.time}`);
+  ): void {
     this.logger.debug(`${chat.author.name}: ${chat.message}`);
 
-    const userInfo: BuzzkUser = await chatClient.getUserInfo(chat.author.id);
-    const userRole = this.mapChzzkUserRoleToChatUserRole(userInfo.role);
+    const userRole = chat.author.hasMod ? 'manager' : 'user';
 
     this.eventEmitter.emit(
       'chat.message',
@@ -144,72 +100,27 @@ export class ChzzkService {
     );
   }
 
-  /**
-   * Maps Chzzk user roles to the internal chat user roles.
-   * @param chzzkRole - The Chzzk user role.
-   * @returns The internal chat user role.
-   */
-  private mapChzzkUserRoleToChatUserRole(
-    chzzkRole: ChzzkUserRole,
-  ): 'streamer' | 'manager' | 'user' | 'unknown' {
-    switch (chzzkRole) {
-      case 'common_user':
-        return 'user';
-      case 'streamer':
-        return 'streamer';
-      case 'manager':
-      case 'streaming_channel_manager':
-      case 'streaming_chat_manager':
-        return 'manager';
-      default:
-        return 'unknown';
-    }
-  }
-
-  /**
-   * Handles the 'widget.open' event.
-   * Connects to the chat for the given channel when the widget is opened.
-   * @param args - Event arguments containing the channel ID.
-   */
   @OnEvent('widget.open')
-  private handleChatConnect(args: { channelId: string }): void {
+  private async handleChatConnect(args: { channelId: string }): Promise<void> {
     this.logger.debug('widget open event:', { ...args });
-    this.getChatClient(args.channelId);
+    await this.getChatClient(args.channelId);
   }
 
-  /**
-   * Handles the 'widget.close' event.
-   * Disconnects from the chat for the given channel when the widget is closed.
-   * @param args - Event arguments containing the channel ID.
-   */
   @OnEvent('widget.close')
-  private async handleChatDisconnect(args: {
-    channelId: string;
-  }): Promise<void> {
+  private async handleChatDisconnect(args: { channelId: string }): Promise<void> {
     this.logger.debug('widget close event:', { ...args });
-    const { channelId } = args;
-    const chatClient = this.chatClients[channelId];
-
+    const chatClient = this.chatClients[args.channelId];
     if (chatClient) {
       await chatClient.disconnect();
-      this.logger.debug('chat disconnected');
-      delete this.chatClients[channelId];
+      delete this.chatClients[args.channelId];
     }
   }
 
-  /**
-   * Handles the 'chat.send' event.
-   * Sends a chat message to the specified channel.
-   * @param event - Event containing message details (service, message, channelId).
-   */
   @OnEvent('chat.send')
-  private handleChatSend(event: SendChatMessageEvent): void {
-    if (event.service !== 'CHZZK') {
-      return;
-    }
-    this.logger.debug(
-      `sending message to channel: ${event.channelId} - ${event.message}`,
-    );
-    this.getChatClient(event.channelId).send(event.message);
+  private async handleChatSend(event: SendChatMessageEvent): Promise<void> {
+    if (event.service !== 'CHZZK') return;
+    const client = await this.getChatClient(event.channelId);
+    if (!client) return;
+    client.send(event.message);
   }
 }

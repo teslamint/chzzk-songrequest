@@ -31,8 +31,6 @@ import { AuthModule } from './auth/auth.module';
         REDIS_PORT: Joi.number().port().default(5432),
         REDIS_USER: Joi.string(),
         REDIS_PASS: Joi.string(),
-        NID_AUT: Joi.string().optional(),
-        NID_SES: Joi.string().optional(),
         CLIENT_ID: Joi.string().required(),
         CLIENT_SECRET: Joi.string().required(),
         CHZZK_REDIRECT_URI: Joi.string().uri().required(),
