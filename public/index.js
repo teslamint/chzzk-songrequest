@@ -171,6 +171,9 @@ class Widget {
         const nextSong = songRequests.shift();
         console.debug('play next song');
         playSong(nextSong);
+      } else if (playerState === 1) {
+        // stop current song if playing
+        player.stopVideo();
       }
     };
 

@@ -14,12 +14,13 @@ FROM deps AS build
 
 WORKDIR /app
 COPY ./prisma ./prisma/
+COPY ./prisma.config.ts ./
 COPY ./src ./src/
 COPY ./tsconfig*.json ./
 COPY ./nest-cli.json ./
 COPY --from=deps /app/node_modules ./node_modules/
+RUN DATABASE_URL="postgresql://build-placeholder" pnpm prisma generate
 RUN pnpm build
-RUN pnpm prisma generate
 RUN pnpm prune --prod
 
 FROM base AS final
@@ -32,6 +33,7 @@ COPY --from=build /app/node_modules ./node_modules/
 COPY ./public ./public/
 COPY ./views ./views/
 COPY ./prisma ./prisma/
+COPY ./prisma.config.ts ./
 COPY docker-entrypoint.sh /app/
 
 ENTRYPOINT [ "/app/docker-entrypoint.sh" ]

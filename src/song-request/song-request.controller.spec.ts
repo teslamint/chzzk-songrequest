@@ -4,7 +4,7 @@ import { SongRequestService } from './song-request.service';
 import { CACHE_MANAGER, CacheModule } from '@nestjs/cache-manager';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service';
-import { SongRequest } from '@prisma/client';
+import { SongRequest } from '../generated/prisma/client';
 
 describe('SongRequestController', () => {
   let controller: SongRequestController;

@@ -34,6 +34,8 @@ import { AuthModule } from './auth/auth.module';
         CLIENT_ID: Joi.string().required(),
         CLIENT_SECRET: Joi.string().required(),
         CHZZK_REDIRECT_URI: Joi.string().uri().required(),
+        BOT_NID_AUT: Joi.string().optional().allow(''),
+        BOT_NID_SES: Joi.string().optional().allow(''),
       }),
       validationOptions: {
         abortEarly: true,

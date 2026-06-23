@@ -9,7 +9,7 @@ import {
   SongRequestDeletedEvent,
   SongRequestSkippedEvent,
 } from '../song-request/song-request.event';
-import { SongRequest } from '@prisma/client';
+import { SongRequest } from '../generated/prisma/client';
 
 describe('EventsGateway', () => {
   let gateway: EventsGateway;

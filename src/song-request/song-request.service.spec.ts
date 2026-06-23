@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CACHE_MANAGER, CacheModule } from '@nestjs/cache-manager';
-import { Prisma, SongRequest } from '@prisma/client';
+import { Prisma, SongRequest } from '../generated/prisma/client';
 import {
   SongRequestCreatedEvent,
   SongRequestDeletedEvent,

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { PrismaService } from '../prisma/prisma.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as Buzzk from 'buzzk';
 import * as crypto from 'crypto';
 
@@ -17,6 +18,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async generateAuthUrl(): Promise<{ url: string; state: string }> {
@@ -126,5 +128,14 @@ export class AuthService {
     });
 
     return refreshed.access;
+  }
+
+  async toggleBotAccount(channelId: string, useBotAccount: boolean): Promise<void> {
+    await this.prisma.channel.update({
+      where: { channelId },
+      data: { useBotAccount },
+    });
+    this.logger.log(`Bot account ${useBotAccount ? 'enabled' : 'disabled'} for channel ${channelId}`);
+    this.eventEmitter.emit('botAccount.changed', { channelId, useBotAccount });
   }
 }
