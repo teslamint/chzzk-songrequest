@@ -1,4 +1,5 @@
 allowBuilds:
+  '@prisma/client': true
   '@prisma/engines': true
   '@swc/core': true
   msgpackr-extract: true
