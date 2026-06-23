@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma, SongRequest } from '../../prisma/generated/prisma/client';
+import { Prisma, SongRequest } from '../generated/prisma/client';
 import { ulid } from 'ulidx';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {

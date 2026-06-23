@@ -34,7 +34,6 @@ COPY ./public ./public/
 COPY ./views ./views/
 COPY ./prisma ./prisma/
 COPY ./prisma.config.ts ./
-COPY --from=build /app/prisma/generated ./prisma/generated/
 COPY docker-entrypoint.sh /app/
 
 ENTRYPOINT [ "/app/docker-entrypoint.sh" ]

@@ -1,4 +1,4 @@
-import { SongRequest } from '../../prisma/generated/prisma/client';
+import { SongRequest } from '../generated/prisma/client';
 
 /**
  * Event emitted when a new song request is created.
