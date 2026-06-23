@@ -296,6 +296,93 @@ describe('ChzzkService', () => {
     });
   });
 
+  describe('getUnofficialChatClient concurrent connect', () => {
+    let prisma: PrismaService;
+    let mockUnofficialClient: jest.Mocked<UnofficialChatClient>;
+
+    beforeEach(() => {
+      prisma = module.get<PrismaService>(PrismaService);
+      mockUnofficialClient = {
+        connect: jest.fn(),
+        send: jest.fn().mockResolvedValue(true),
+        disconnect: jest.fn(),
+        onDisconnect: jest.fn(),
+        connected: true,
+      } as any;
+      (UnofficialChatClient as jest.Mock).mockImplementation(() => mockUnofficialClient);
+    });
+
+    it('should return the same Promise for concurrent calls and create only one client', async () => {
+      (prisma.channel.findUnique as jest.Mock).mockResolvedValue({
+        channelId: 'ch-1',
+        useBotAccount: true,
+      });
+
+      let resolveConnect: (v: boolean) => void;
+      mockUnofficialClient.connect.mockReturnValue(
+        new Promise<boolean>((res) => { resolveConnect = res; }),
+      );
+
+      const call1 = service.getUnofficialChatClient('ch-1');
+      const call2 = service.getUnofficialChatClient('ch-1');
+
+      resolveConnect!(true);
+      const [r1, r2] = await Promise.all([call1, call2]);
+
+      expect(UnofficialChatClient).toHaveBeenCalledTimes(1);
+      expect(r1).toBe(r2);
+    });
+  });
+
+  describe('getUnofficialChatClient connect failure cooldown', () => {
+    let prisma: PrismaService;
+    let mockUnofficialClient: jest.Mocked<UnofficialChatClient>;
+
+    beforeEach(() => {
+      prisma = module.get<PrismaService>(PrismaService);
+      mockUnofficialClient = {
+        connect: jest.fn().mockResolvedValue(false),
+        send: jest.fn(),
+        disconnect: jest.fn(),
+        onDisconnect: jest.fn(),
+        connected: false,
+      } as any;
+      (UnofficialChatClient as jest.Mock).mockImplementation(() => mockUnofficialClient);
+    });
+
+    it('should not retry connect within cooldown window', async () => {
+      (prisma.channel.findUnique as jest.Mock).mockResolvedValue({
+        channelId: 'ch-1',
+        useBotAccount: true,
+      });
+
+      // First call — connect fails, cooldown set
+      const r1 = await service.getUnofficialChatClient('ch-1');
+      expect(r1).toBeNull();
+      expect(UnofficialChatClient).toHaveBeenCalledTimes(1);
+
+      // Second call within cooldown — should skip DB + connect entirely
+      const r2 = await service.getUnofficialChatClient('ch-1');
+      expect(r2).toBeNull();
+      expect(UnofficialChatClient).toHaveBeenCalledTimes(1);
+    });
+
+    it('should clear failure cooldown on botAccount.changed', async () => {
+      (prisma.channel.findUnique as jest.Mock).mockResolvedValue({
+        channelId: 'ch-1',
+        useBotAccount: true,
+      });
+
+      // Prime failure cooldown
+      await service.getUnofficialChatClient('ch-1');
+      expect(service['connectFailedUntil']['ch-1']).toBeDefined();
+
+      // Clear via event handler
+      service['handleBotAccountChanged']({ channelId: 'ch-1', useBotAccount: true });
+      expect(service['connectFailedUntil']['ch-1']).toBeUndefined();
+    });
+  });
+
   describe('handleBotAccountChanged', () => {
     let prisma: PrismaService;
     let mockUnofficialClient: jest.Mocked<UnofficialChatClient>;

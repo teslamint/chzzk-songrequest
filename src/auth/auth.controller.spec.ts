@@ -79,5 +79,36 @@ describe('AuthController', () => {
       expect(authService.toggleBotAccount).toHaveBeenCalledWith('ch-1', true);
       expect(result).toEqual({ success: true });
     });
+
+    it('should throw BadRequestException when useBotAccount is missing', async () => {
+      await expect(
+        controller.toggleBot('ch-1', {} as any),
+      ).rejects.toMatchObject({ message: 'useBotAccount must be a boolean' });
+      expect(authService.toggleBotAccount).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when useBotAccount is a string', async () => {
+      await expect(
+        controller.toggleBot('ch-1', { useBotAccount: 'true' } as any),
+      ).rejects.toMatchObject({ message: 'useBotAccount must be a boolean' });
+    });
+
+    it('should throw NotFoundException when channel does not exist (P2025)', async () => {
+      const prismaError = Object.assign(new Error('Record not found'), { code: 'P2025' });
+      (authService.toggleBotAccount as jest.Mock).mockRejectedValue(prismaError);
+
+      await expect(
+        controller.toggleBot('ch-unknown', { useBotAccount: true }),
+      ).rejects.toMatchObject({ message: 'Channel ch-unknown not found' });
+    });
+
+    it('should rethrow unexpected errors', async () => {
+      const unexpectedError = new Error('Database unavailable');
+      (authService.toggleBotAccount as jest.Mock).mockRejectedValue(unexpectedError);
+
+      await expect(
+        controller.toggleBot('ch-1', { useBotAccount: true }),
+      ).rejects.toThrow('Database unavailable');
+    });
   });
 });

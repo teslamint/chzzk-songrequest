@@ -17,8 +17,15 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class ChzzkService implements OnModuleInit {
+  private static readonly CONNECT_FAILURE_COOLDOWN_MS = 60_000;
+
   private readonly chatClients: ChatClientContainer = {};
   private readonly unofficialClients: UnofficialChatClientContainer = {};
+  private readonly connectingClients: Record<
+    string,
+    Promise<UnofficialChatClient | null>
+  > = {};
+  private readonly connectFailedUntil: Record<string, number> = {};
   private readonly noBotAccount = new Set<string>();
   private readonly logger = new Logger(ChzzkService.name);
 
@@ -74,6 +81,15 @@ export class ChzzkService implements OnModuleInit {
       return this.unofficialClients[channelId];
     }
 
+    if (this.connectingClients[channelId]) {
+      return this.connectingClients[channelId];
+    }
+
+    const failedUntil = this.connectFailedUntil[channelId];
+    if (failedUntil && Date.now() < failedUntil) {
+      return null;
+    }
+
     if (this.noBotAccount.has(channelId)) {
       return null;
     }
@@ -85,6 +101,25 @@ export class ChzzkService implements OnModuleInit {
       return null;
     }
 
+    const connectPromise = this.resolveAndCreateUnofficialClient(
+      channelId,
+      nidAut,
+      nidSes,
+    );
+    this.connectingClients[channelId] = connectPromise;
+
+    try {
+      return await connectPromise;
+    } finally {
+      delete this.connectingClients[channelId];
+    }
+  }
+
+  private async resolveAndCreateUnofficialClient(
+    channelId: string,
+    nidAut: string,
+    nidSes: string,
+  ): Promise<UnofficialChatClient | null> {
     const channel = await this.prisma.channel.findUnique({
       where: { channelId },
     });
@@ -93,6 +128,14 @@ export class ChzzkService implements OnModuleInit {
       return null;
     }
 
+    return this.createUnofficialClient(channelId, nidAut, nidSes);
+  }
+
+  private async createUnofficialClient(
+    channelId: string,
+    nidAut: string,
+    nidSes: string,
+  ): Promise<UnofficialChatClient | null> {
     const client = new UnofficialChatClient(nidAut, nidSes);
     client.onDisconnect(() => {
       this.logger.debug(`Unofficial client disconnected from ${channelId}`);
@@ -101,9 +144,12 @@ export class ChzzkService implements OnModuleInit {
 
     const connected = await client.connect(channelId);
     if (!connected) {
+      this.connectFailedUntil[channelId] =
+        Date.now() + ChzzkService.CONNECT_FAILURE_COOLDOWN_MS;
       return null;
     }
 
+    delete this.connectFailedUntil[channelId];
     this.unofficialClients[channelId] = client;
     return client;
   }
@@ -195,6 +241,7 @@ export class ChzzkService implements OnModuleInit {
     useBotAccount: boolean;
   }): void {
     this.noBotAccount.delete(args.channelId);
+    delete this.connectFailedUntil[args.channelId];
 
     if (!args.useBotAccount) {
       const unofficialClient = this.unofficialClients[args.channelId];

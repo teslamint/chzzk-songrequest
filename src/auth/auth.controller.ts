@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Param, Query, Res, Render } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, NotFoundException, Patch, Param, Query, Res, Render } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 @Controller('auth')
@@ -30,7 +30,17 @@ export class AuthController {
     @Param('channelId') channelId: string,
     @Body() body: { useBotAccount: boolean },
   ): Promise<{ success: boolean }> {
-    await this.authService.toggleBotAccount(channelId, body.useBotAccount);
-    return { success: true };
+    if (typeof body?.useBotAccount !== 'boolean') {
+      throw new BadRequestException('useBotAccount must be a boolean');
+    }
+    try {
+      await this.authService.toggleBotAccount(channelId, body.useBotAccount);
+      return { success: true };
+    } catch (e) {
+      if (e?.code === 'P2025') {
+        throw new NotFoundException(`Channel ${channelId} not found`);
+      }
+      throw e;
+    }
   }
 }
