@@ -1,7 +1,7 @@
 version: '3'
 services:
   postgres:
-    image: postgres:16-alpine
+    image: docker.io/postgres:16-alpine
     environment:
       - POSTGRES_DB=songrequest
       - POSTGRES_USER=songrequest
@@ -12,7 +12,7 @@ services:
       - "127.0.0.1:55432:5432"
 
   redis:
-    image: redis:7-alpine
+    image: docker.io/redis:7-alpine
     volumes:
       - redis_data:/data
     command: redis-server --save 60 1 --loglevel warning

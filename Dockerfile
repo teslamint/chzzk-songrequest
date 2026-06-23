@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM docker.io/node:20-alpine AS base
 
 RUN npm i -g pnpm
 
@@ -7,6 +7,7 @@ FROM base AS deps
 WORKDIR /app
 COPY package.json ./
 COPY pnpm-lock.yaml ./
+COPY pnpm-workspace.yaml ./
 RUN --mount=type=cache,id=pnpm,target=/root/.pnpm-store/v3 pnpm install
 
 FROM deps AS build
@@ -24,6 +25,7 @@ RUN pnpm prune --prod
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/package.json ./
+COPY --from=build /app/pnpm-workspace.yaml ./
 COPY --from=build /app/dist ./dist/
 COPY --from=build /app/node_modules ./node_modules/
 COPY ./public ./public/

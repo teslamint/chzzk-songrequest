@@ -1,14 +1,14 @@
 version: '3'
 services:
   app:
-    image: teslamint/chzzk-songrequest
+    image: docker.io/teslamint/chzzk-songrequest
     build:
       context: .
     volumes:
       - ./.env.docker:/app/.env:ro
 
   caddy:
-    image: caddy:alpine
+    image: docker.io/caddy:alpine
     ports:
       - "127.0.0.1:3000:80"
     volumes:
