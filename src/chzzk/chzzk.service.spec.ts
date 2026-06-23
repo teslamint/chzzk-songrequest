@@ -119,6 +119,57 @@ describe('ChzzkService', () => {
     });
   });
 
+  describe('handleChatConnect', () => {
+    it('should call getChatClient on widget.open', async () => {
+      const spy = jest.spyOn(service, 'getChatClient');
+      await service['handleChatConnect']({ channelId: 'ch-1' });
+      expect(spy).toHaveBeenCalledWith('ch-1');
+    });
+  });
+
+  describe('handleChatDisconnect', () => {
+    it('should disconnect and remove client on widget.close', async () => {
+      await service.getChatClient('ch-1');
+      await service['handleChatDisconnect']({ channelId: 'ch-1' });
+      expect(mockChatClient.disconnect).toHaveBeenCalled();
+      expect(service['chatClients']['ch-1']).toBeUndefined();
+    });
+  });
+
+  describe('handleChatClientConnect', () => {
+    it('should emit chat.connect', () => {
+      service['handleChatClientConnect']('ch-1');
+      expect(eventEmitter.emit).toHaveBeenCalledWith('chat.connect', {
+        service: 'CHZZK',
+        channelId: 'ch-1',
+      });
+    });
+  });
+
+  describe('handleChatClientDisconnect', () => {
+    it('should emit chat.disconnect and delete from chatClients', async () => {
+      await service.getChatClient('ch-1');
+      service['handleChatClientDisconnect']('ch-1');
+      expect(eventEmitter.emit).toHaveBeenCalledWith('chat.disconnect', {
+        service: 'CHZZK',
+        channelId: 'ch-1',
+      });
+      expect(service['chatClients']['ch-1']).toBeUndefined();
+    });
+  });
+
+  describe('getChatClient connect failure', () => {
+    it('should log error when connect returns null', async () => {
+      mockChatClient.connect.mockResolvedValue(null);
+      const loggerSpy = jest.spyOn(service['logger'], 'error');
+      await service.getChatClient('ch-1');
+      await Promise.resolve();
+      expect(loggerSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Failed to connect to ch-1'),
+      );
+    });
+  });
+
   describe('handleChatSend', () => {
     it('should send message via chat client', async () => {
       await service.getChatClient('ch-1');

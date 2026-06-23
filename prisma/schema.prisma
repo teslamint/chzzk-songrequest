@@ -67,8 +67,6 @@ model ChzzkToken {
   updatedAt    DateTime @updatedAt
 
   channel      Channel  @relation(fields: [channelId], references: [channelId], onDelete: Cascade)
-
-  @@index([channelId])
 }
 
 enum ChannelStatus {

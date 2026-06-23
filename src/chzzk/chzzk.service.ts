@@ -76,6 +76,7 @@ export class ChzzkService implements OnModuleInit {
   private handleChatClientDisconnect(channelId: string): void {
     this.logger.debug(`Closed to ${channelId}`);
     this.eventEmitter.emit('chat.disconnect', { service: 'CHZZK', channelId });
+    delete this.chatClients[channelId];
   }
 
   private handleIncomingChatMessage(
