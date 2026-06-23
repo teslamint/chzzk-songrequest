@@ -8,7 +8,7 @@ export class AuthController {
   @Get('chzzk')
   async authorize(@Res() reply: any): Promise<void> {
     const { url } = await this.authService.generateAuthUrl();
-    reply.redirect(302, url);
+    reply.redirect(url, 302);
   }
 
   @Get('chzzk/callback')

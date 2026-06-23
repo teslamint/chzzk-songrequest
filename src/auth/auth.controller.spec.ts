@@ -36,8 +36,8 @@ describe('AuthController', () => {
 
       expect(authService.generateAuthUrl).toHaveBeenCalled();
       expect(mockReply.redirect).toHaveBeenCalledWith(
-        302,
         'https://chzzk.naver.com/account-interlock?clientId=test',
+        302,
       );
     });
   });
