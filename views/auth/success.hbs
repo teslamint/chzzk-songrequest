@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head><title>CHZZK 인증</title></head>
+<body>
+{{#if error}}
+  <h1>인증 실패</h1>
+  <p>{{ error }}</p>
+  <a href="/auth/chzzk">다시 시도</a>
+{{else}}
+  <h1>인증 완료</h1>
+  <p>채널: {{ channelName }} ({{ channelId }})</p>
+  <p>위젯 URL: <a href="/widget/{{ channelId }}">/widget/{{ channelId }}</a></p>
+{{/if}}
+</body>
+</html>
