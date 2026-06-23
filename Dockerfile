@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package.json ./
 COPY pnpm-lock.yaml ./
 COPY pnpm-workspace.yaml ./
-RUN --mount=type=cache,id=pnpm,target=/root/.pnpm-store/v3 pnpm install
+RUN --mount=type=cache,id=pnpm,target=/root/.pnpm-store/v3 pnpm install --frozen-lockfile
 
 FROM deps AS build
 
