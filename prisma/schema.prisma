@@ -44,3 +44,34 @@ enum RequestFrom {
   CHAT
   WEBSITE
 }
+
+model Channel {
+  channelId     String        @id
+  name          String
+  imageUrl      String?
+  followerCount Int           @default(0)
+  status        ChannelStatus @default(ACTIVE)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  token         ChzzkToken?
+}
+
+model ChzzkToken {
+  id           String   @id @default(cuid())
+  channelId    String   @unique
+  accessToken  String
+  refreshToken String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  channel      Channel  @relation(fields: [channelId], references: [channelId], onDelete: Cascade)
+
+  @@index([channelId])
+}
+
+enum ChannelStatus {
+  ACTIVE
+  NEEDS_REAUTH
+}
