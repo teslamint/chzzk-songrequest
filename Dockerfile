@@ -19,7 +19,7 @@ COPY ./src ./src/
 COPY ./tsconfig*.json ./
 COPY ./nest-cli.json ./
 COPY --from=deps /app/node_modules ./node_modules/
-RUN pnpm prisma generate
+RUN DATABASE_URL="postgresql://build-placeholder" pnpm prisma generate
 RUN pnpm build
 RUN pnpm prune --prod
 
