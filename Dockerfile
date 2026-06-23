@@ -1,6 +1,6 @@
-FROM docker.io/node:20-alpine AS base
+FROM docker.io/node:22-alpine AS base
 
-RUN npm i -g pnpm
+RUN npm i -g pnpm@11
 
 FROM base AS deps
 
@@ -25,6 +25,7 @@ RUN pnpm prune --prod
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/package.json ./
+COPY --from=build /app/pnpm-lock.yaml ./
 COPY --from=build /app/pnpm-workspace.yaml ./
 COPY --from=build /app/dist ./dist/
 COPY --from=build /app/node_modules ./node_modules/
