@@ -30,11 +30,11 @@ COPY --from=build /app/pnpm-lock.yaml ./
 COPY --from=build /app/pnpm-workspace.yaml ./
 COPY --from=build /app/dist ./dist/
 COPY --from=build /app/node_modules ./node_modules/
-COPY --from=build /app/prisma/generated ./prisma/generated/
 COPY ./public ./public/
 COPY ./views ./views/
 COPY ./prisma ./prisma/
 COPY ./prisma.config.ts ./
+COPY --from=build /app/prisma/generated ./prisma/generated/
 COPY docker-entrypoint.sh /app/
 
 ENTRYPOINT [ "/app/docker-entrypoint.sh" ]
