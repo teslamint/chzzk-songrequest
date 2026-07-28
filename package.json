@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@distube/ytdl-core": "4.16.12",
-    "@fastify/static": "^9.1.1",
+    "@fastify/static": "^10.1.2",
     "@fastify/view": "^11.1.1",
     "@nestjs/bull": "^11.0.3",
     "@nestjs/cache-manager": "^3.0.1",
